@@ -1,0 +1,41 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1694989617717,
+      "tag": "0000_hard_firebird",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1694989859069,
+      "tag": "0001_cold_scarlet_witch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1695006547880,
+      "tag": "0002_worried_nomad",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1695009544867,
+      "tag": "0003_demonic_skin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1695102366613,
+      "tag": "0004_overjoyed_beyonder",
+      "breakpoints": true
+    }
+  ]
+}
