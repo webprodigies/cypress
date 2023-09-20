@@ -16,27 +16,30 @@ import TooltipComponent from './tooltip';
 import CustomDialogTrigger from './customDialogTrigger';
 import IconSelector from './iconSelector';
 import WorkspaceEditor from './workspaceEditor';
-import { getWorkspaceFolders } from '@/lib/supabase/queries';
 import { useRouter } from 'next/navigation';
+import { Accordion } from '@radix-ui/react-accordion';
+import { cva } from 'class-variance-authority';
 
 interface ListDropdownProps {
   title: string;
-  id: string;
-  listType: 'workspace' | 'folder';
+  workspaceId: string;
+  listType: 'workspace' | 'folder' | 'file';
   iconId: (typeof ICON_NAMES)[number];
   children?: React.ReactNode;
   onClick?: MouseEventHandler;
   createNew?: 'workspace' | 'folder' | 'file';
+  test?: any;
 }
 
 export function ListDropdown({
   title,
-  id,
+  workspaceId,
   listType,
   iconId,
   children,
   onClick,
   createNew,
+  test,
   ...props
 }: ListDropdownProps) {
   //Use search params is cousing a rerender to get the url route.
@@ -53,8 +56,8 @@ export function ListDropdown({
       : 'File are a powerfull way to express your thoughts.';
 
   const listTyles = clsx('relative', {
-    'border-none px-2 rounded-xl': isWorkspace,
-    'border-none rounded-md ml-2': !isWorkspace,
+    'border-none ': isWorkspace,
+    'border-none ml-2': !isWorkspace,
   });
 
   const commandStyles = twMerge(
@@ -69,73 +72,84 @@ export function ListDropdown({
 
   const accordianClick = async (
     event: React.MouseEvent<HTMLElement>,
-    id: string
+    workspaceId: string
   ) => {
-    console.log(listType);
+    console.log(event.currentTarget.id);
     if (listType === 'workspace') {
-      // const response = await getWorkspaceFolders(id);
-      router.push(`/dashboard/${id}?key="value"`);
+      // const response = await getWorkspaceFolders(workspaceId);
+      router.push(`/dashboard/${workspaceId}`);
     }
     if (listType === 'folder') {
+      router.push(`/dashboard/${workspaceId}/`);
     }
   };
 
   const fakeData: string[] = ['string', 'Element', 'chiclen'];
   return (
     <AccordionItem
-      value={id}
+      value={workspaceId}
       className={listTyles}
       {...props}
     >
-      <Link
-        key={id}
-        href={`/dashboard/${id}`}
+      <AccordionTrigger
+        id={listType}
+        onClick={(e) => accordianClick(e, workspaceId)}
+        className="hover:no-underline p-2 dark:text-muted-foreground text-sm"
       >
-        <AccordionTrigger
-          onClick={(e) => accordianClick(e, id)}
-          className="hover:no-underline p-2 dark:text-muted-foreground text-sm"
-        >
-          <div className={groupIdentifies}>
-            <div className="flex gap-2 items-center justify-center overflow-hidden ">
-              <CustomDialogTrigger content={<IconSelector />}>
-                <div className="w-[14px] h-[16px]">
-                  <Icon
-                    name={iconId}
-                    size={16}
-                  />
-                </div>
-              </CustomDialogTrigger>
+        <div className={groupIdentifies}>
+          <div className="flex gap-2 items-center justify-center overflow-hidden ">
+            <CustomDialogTrigger content={<IconSelector />}>
+              <div className="w-[14px] h-[16px]">
+                <Icon
+                  name={iconId}
+                  size={16}
+                />
+              </div>
+            </CustomDialogTrigger>
 
-              <span className="overflow-ellipsis overflow-hidden w-[140px]">
-                {title}
-              </span>
-            </div>
+            <span className="overflow-ellipsis overflow-hidden w-[140px]">
+              {title}
+            </span>
+          </div>
 
-            <div className={commandStyles}>
-              <TooltipComponent message="Edit">
-                <MoreHorizontalIcon
+          <div className={commandStyles}>
+            <TooltipComponent message="Edit">
+              <MoreHorizontalIcon
+                size={15}
+                className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+              />
+            </TooltipComponent>
+
+            <TooltipComponent message="Add Folder">
+              <CustomDialogTrigger
+                header={`Create a new ${createNew}`}
+                description={description}
+                content={<WorkspaceEditor type={createNew} />}
+              >
+                <PlusIcon
                   size={15}
                   className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
                 />
-              </TooltipComponent>
-
-              <TooltipComponent message="Add Folder">
-                <CustomDialogTrigger
-                  header={`Create a new ${createNew}`}
-                  description={description}
-                  content={<WorkspaceEditor type={createNew} />}
-                >
-                  <PlusIcon
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomDialogTrigger>
-              </TooltipComponent>
-            </div>
+              </CustomDialogTrigger>
+            </TooltipComponent>
           </div>
-        </AccordionTrigger>
-      </Link>
-      <AccordionContent>{children}</AccordionContent>
+        </div>
+      </AccordionTrigger>
+      <AccordionContent></AccordionContent>
     </AccordionItem>
   );
 }
+
+
+
+interface NewListDropdownProps {
+  children?: React.ReactNode;
+}
+export const NewListDropdown: React.FC<NewListDropdownProps> = ({
+  children,
+}) => {
+  //CHANGED Have to add a new prop inside shadcn accordinan that will help hide the chevron.
+  return (
+    
+  );
+};

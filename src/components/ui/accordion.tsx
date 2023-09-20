@@ -20,10 +20,11 @@ const AccordionItem = React.forwardRef<
 ));
 AccordionItem.displayName = 'AccordionItem';
 
+//CHANGED using disabled to show the chevron
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, disabled, ...props }, ref) => (
   // CHANGE set justify content and cente
   <AccordionPrimitive.Header className="flex justify-between items-center">
     {children}
@@ -36,7 +37,9 @@ const AccordionTrigger = React.forwardRef<
       )}
       {...props}
     >
-      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+      {!disabled && (
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+      )}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));

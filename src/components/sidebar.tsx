@@ -1,10 +1,7 @@
 import React from 'react';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import Link from 'next/link';
-import Image from 'next/image';
 
-import Logo from '../../public/cypresslogo.svg';
 import { UserButton } from './userButton';
 import ListWorkSpaces from './listWorkSpaces';
 import {
@@ -13,6 +10,7 @@ import {
   getSharedWorkspaces,
 } from '@/lib/supabase/queries';
 import { ScrollArea } from './ui/scroll-area';
+import { NewListDropdown } from './listDropdown';
 
 interface SidebarProps {}
 
@@ -56,6 +54,7 @@ const Sidebar: React.FC<SidebarProps> = async () => {
               className="mb-10"
             />
           )}
+          <NewListDropdown></NewListDropdown>
         </ScrollArea>
       </div>
     );

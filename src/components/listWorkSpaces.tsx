@@ -23,9 +23,10 @@ interface ListWorkSpacesProps {
     | [];
   listTitle?: 'PRIVATE' | 'COLLABORATING' | 'SHARED';
   className?: string;
+  params?: { params: { slug: string } };
 }
 
-const ListWorkSpaces: React.FC<ListWorkSpacesProps> = ({
+const ListWorkSpaces: React.FC<ListWorkSpacesProps> = async ({
   workspaceCategory,
   listTitle,
   className,
@@ -39,7 +40,6 @@ const ListWorkSpaces: React.FC<ListWorkSpacesProps> = ({
   //       ...state,
   //     ]
   //   );
-
   const addPrivateWorkspace = async (workspace: WorkspacesWithIconIds) => {
     const privateWorkspace: WorkspacesWithIconIds = workspace;
     await createPrivateWorkspace(privateWorkspace);
@@ -68,40 +68,53 @@ const ListWorkSpaces: React.FC<ListWorkSpacesProps> = ({
         )}
       </div>
 
-      {workspaceCategory.map(({ title = 'Your Workspace', id, iconId }) => (
-        //WIP Ability to change icons
-        <ListDropdown
-          id={id}
-          title={title}
-          key={id}
-          listType="workspace"
-          createNew="folder"
-          iconId={iconId}
-        >
+      {workspaceCategory.map(
+        ({ title = 'Your Workspace', id: workspaceId, iconId }) => (
+          //WIP Ability to change icons
           <ListDropdown
-            id={id + 1}
+            workspaceId={workspaceId}
             title={title}
-            key={id}
-            listType="folder"
-            createNew="file"
+            key={workspaceId}
+            listType="workspace"
+            createNew="folder"
             iconId={iconId}
           >
-            <ol className="border-l-[1px] border-muted-foreground ml-3 pl-5">
-              <li className="overflow-hidden overflow-ellipsis group/file relative ">
-                Home Stuffe
-                <div className=" px-2 dark:bg-Neutrals-12 bg-washed-purple-100 top-0 bottom-0 group-hover/file:flex hidden rounded-sm absolute right-0 items-center gap-2 justify-center">
-                  <MoreHorizontalIcon
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </div>
-              </li>
-            </ol>
+            {/* <ListDropdown
+              workspaceId={workspaceId + 1}
+              title={title}
+              key={workspaceId}
+              listType="folder"
+              createNew="file"
+              iconId={iconId}
+            >
+              <ListDropdown
+                workspaceId={workspaceId + 2}
+                title={title}
+                key={workspaceId}
+                listType="file"
+                createNew="file"
+                iconId={iconId}
+              ></ListDropdown>
+            </ListDropdown> */}
           </ListDropdown>
-        </ListDropdown>
-      ))}
+        )
+      )}
     </Accordion>
   );
 };
 
 export default ListWorkSpaces;
+/*
+
+ <ol className="border-l-[1px] border-muted-foreground ml-3 pl-5">
+                <li className="overflow-hidden overflow-ellipsis group/file relative ">
+                  Home Stuffe
+                  <div className=" px-2 dark:bg-Neutrals-12 bg-washed-purple-100 top-0 bottom-0 group-hover/file:flex hidden rounded-sm absolute right-0 items-center gap-2 justify-center">
+                    <MoreHorizontalIcon
+                      size={15}
+                      className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                    />
+                  </div>
+                </li>
+              </ol>
+*/
