@@ -99,14 +99,21 @@ export const getSharedWorkspaces = async (userId: string | null) => {
   }
 };
 
-export const getWorkspaceFolders = async (workspaceId: string) => {
+export const getFolders = async (workspaceId: string) => {
   if (workspaceId) {
     const results = (await db
       .select()
       .from(folders)
       .where(eq(folders.workspaceId, workspaceId))) as Folder[] | [];
+    return results;
   }
   return [];
+};
+
+export const getFiles = async (folderId: string) => {
+  if (folderId) {
+    // const results = await db.select().from(file).where();
+  }
 };
 
 ///Listen to stuff from the folders table.

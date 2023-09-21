@@ -177,6 +177,11 @@ export type Folder = {
     ? (typeof ICON_NAMES)[number]
     : InferSelectModel<typeof folders>[T];
 };
+// export type File = {
+//   [T in keyof InferSelectModel<typeof >]: T extends 'iconId'
+//     ? (typeof ICON_NAMES)[number]
+//     : InferSelectModel<typeof folders>[T];
+// };
 
 export type WorkspacesWithIconIds = {
   [K in keyof workspace]: K extends 'iconId'

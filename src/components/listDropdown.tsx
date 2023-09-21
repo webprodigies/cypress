@@ -1,155 +1,114 @@
 'use client';
-import React, { MouseEventHandler } from 'react';
-import clsx from 'clsx';
-
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from './ui/accordion';
-import Link from 'next/link';
-import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
-import Icon from './icon';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ICON_NAMES } from '@/lib/constants';
-import TooltipComponent from './tooltip';
-import CustomDialogTrigger from './customDialogTrigger';
-import IconSelector from './iconSelector';
-import WorkspaceEditor from './workspaceEditor';
-import { useRouter } from 'next/navigation';
+
+import { getFolders } from '@/lib/supabase/queries';
+import { Folder } from '@/lib/supabase/supabase.types';
+import { Dropdown } from './Dropdown';
 import { Accordion } from '@radix-ui/react-accordion';
-import { cva } from 'class-variance-authority';
+import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
-interface ListDropdownProps {
+interface MultipleDropdownContainerProps {
   title: string;
-  workspaceId: string;
-  listType: 'workspace' | 'folder' | 'file';
+  id: string;
   iconId: (typeof ICON_NAMES)[number];
-  children?: React.ReactNode;
-  onClick?: MouseEventHandler;
-  createNew?: 'workspace' | 'folder' | 'file';
-  test?: any;
+  disabled: boolean;
 }
-
-export function ListDropdown({
-  title,
-  workspaceId,
-  listType,
-  iconId,
-  children,
-  onClick,
-  createNew,
-  test,
-  ...props
-}: ListDropdownProps) {
-  //Use search params is cousing a rerender to get the url route.
-  //searchParams
+export const MultipleDropdownContainer: React.FC<
+  MultipleDropdownContainerProps
+> = ({ title, id, iconId, disabled }) => {
+  //CHANGED Have to add a new prop inside shadcn accordinan that will help hide the chevron.
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [files, setFiles] = useState([]);
   const router = useRouter();
-  const isWorkspace = listType === 'workspace';
-  const groupIdentifies = clsx(
-    'dark:text-white whitespace-nowrap flex justify-between items-center relative',
-    { 'group/workspace': isWorkspace, 'group/folder': !isWorkspace }
-  );
-  const description =
-    createNew === 'folder'
-      ? 'Folders allow you group related topics together.'
-      : 'File are a powerfull way to express your thoughts.';
+  const pathname = usePathname();
 
-  const listTyles = clsx('relative', {
-    'border-none ': isWorkspace,
-    'border-none ml-2': !isWorkspace,
-  });
+  const defaultValue = useMemo(() => {
+    const defVal = pathname.replace('/dashboard/', '').split('/');
+    if (defVal.length === 1) return [`workspace/${defVal[0]}`];
+    if (defVal.length === 2)
+      return [`workspace/${defVal[0]}`, `folder/${defVal[1]}`];
+    if (defVal.length === 3)
+      return [
+        `workspace/${defVal[0]}`,
+        `folder/${defVal[1]}`,
+        `file/${defVal[2]}`,
+      ];
 
-  const commandStyles = twMerge(
-    clsx(
-      'h-full pl-3 dark:bg-Neutrals-12 hidden rounded-sm absolute right-0 items-center gap-2 bg-washed-purple-100 justify-center',
-      {
-        'group-hover/workspace:flex': isWorkspace,
-        'group-hover/folder:flex': !isWorkspace,
-      }
-    )
-  );
+    return [''];
+  }, []);
 
-  const accordianClick = async (
-    event: React.MouseEvent<HTMLElement>,
-    workspaceId: string
+  const fetchData = async (
+    id: string,
+    type: 'workspace' | 'folder' | 'file'
   ) => {
-    console.log(event.currentTarget.id);
-    if (listType === 'workspace') {
-      // const response = await getWorkspaceFolders(workspaceId);
-      router.push(`/dashboard/${workspaceId}`);
+    if (type === 'workspace') {
+      const workspaceId = id.split('workspace/')[1];
+      const response = await getFolders(workspaceId);
+      router.push(workspaceId);
+      setFolders(response);
     }
-    if (listType === 'folder') {
-      router.push(`/dashboard/${workspaceId}/`);
+    if (type === 'folder') {
+      const folderId = id.split('folder/')[2];
     }
   };
 
-  const fakeData: string[] = ['string', 'Element', 'chiclen'];
+  useEffect(() => {
+    const getDefaultData = async () => {
+      const path = pathname.replace('/dashboard/', '').split('/');
+      if (pathname.includes(id)) {
+        console.log(path);
+        if (path.length === 1) {
+          console.log(defaultValue);
+          const response = await getFolders(id);
+          setFolders(response);
+        }
+        if (path.length === 2) {
+        }
+      }
+    };
+    getDefaultData();
+  }, []);
+
   return (
-    <AccordionItem
-      value={workspaceId}
-      className={listTyles}
-      {...props}
+    // Workspace
+    <Accordion
+      defaultValue={defaultValue}
+      type="multiple"
     >
-      <AccordionTrigger
-        id={listType}
-        onClick={(e) => accordianClick(e, workspaceId)}
-        className="hover:no-underline p-2 dark:text-muted-foreground text-sm"
+      <Dropdown
+        title={title}
+        listType="workspace"
+        id={`workspace/${id}`}
+        iconId={iconId}
+        onClick={fetchData}
+        disabled={disabled}
       >
-        <div className={groupIdentifies}>
-          <div className="flex gap-2 items-center justify-center overflow-hidden ">
-            <CustomDialogTrigger content={<IconSelector />}>
-              <div className="w-[14px] h-[16px]">
-                <Icon
-                  name={iconId}
-                  size={16}
-                />
-              </div>
-            </CustomDialogTrigger>
-
-            <span className="overflow-ellipsis overflow-hidden w-[140px]">
-              {title}
-            </span>
-          </div>
-
-          <div className={commandStyles}>
-            <TooltipComponent message="Edit">
-              <MoreHorizontalIcon
-                size={15}
-                className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-              />
-            </TooltipComponent>
-
-            <TooltipComponent message="Add Folder">
-              <CustomDialogTrigger
-                header={`Create a new ${createNew}`}
-                description={description}
-                content={<WorkspaceEditor type={createNew} />}
-              >
-                <PlusIcon
-                  size={15}
-                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                />
-              </CustomDialogTrigger>
-            </TooltipComponent>
-          </div>
-        </div>
-      </AccordionTrigger>
-      <AccordionContent></AccordionContent>
-    </AccordionItem>
-  );
-}
-
-
-
-interface NewListDropdownProps {
-  children?: React.ReactNode;
-}
-export const NewListDropdown: React.FC<NewListDropdownProps> = ({
-  children,
-}) => {
-  //CHANGED Have to add a new prop inside shadcn accordinan that will help hide the chevron.
-  return (
-    
+        {folders.map((folder, index) => (
+          <Dropdown
+            key={folder.folderId}
+            title={folder.title}
+            listType="folder"
+            id={`folder/${folder.folderId}`}
+            iconId={folder.iconId}
+            onClick={fetchData}
+            disabled={disabled}
+          >
+            {files.map((_, index) => (
+              <Dropdown
+                key={index}
+                title={title}
+                listType="file"
+                id={id}
+                iconId={iconId}
+                onClick={fetchData}
+                disabled={disabled}
+              ></Dropdown>
+            ))}
+          </Dropdown>
+        ))}
+      </Dropdown>
+    </Accordion>
   );
 };

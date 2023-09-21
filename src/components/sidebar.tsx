@@ -3,14 +3,13 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 import { UserButton } from './userButton';
-import ListWorkSpaces from './listWorkSpaces';
 import {
   getPrivateWorkspaces,
   getCollaboratingWorkspaces,
   getSharedWorkspaces,
 } from '@/lib/supabase/queries';
 import { ScrollArea } from './ui/scroll-area';
-import { NewListDropdown } from './listDropdown';
+import ListWorkspaces from './listWorkSpaces';
 
 interface SidebarProps {}
 
@@ -35,26 +34,25 @@ const Sidebar: React.FC<SidebarProps> = async () => {
           <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-Neutrals-12 to-transparent z-40" />
           <div></div>
           {privateWorkspaces && (
-            <ListWorkSpaces
+            <ListWorkspaces
               className="mt-12"
               workspaceCategory={privateWorkspaces}
               listTitle="PRIVATE"
             />
           )}
           {sharedWorkspaces && (
-            <ListWorkSpaces
+            <ListWorkspaces
               workspaceCategory={sharedWorkspaces}
               listTitle="SHARED"
             />
           )}
           {collaboratedWorkspaces && (
-            <ListWorkSpaces
+            <ListWorkspaces
               workspaceCategory={collaboratedWorkspaces}
               listTitle="COLLABORATING"
               className="mb-10"
             />
           )}
-          <NewListDropdown></NewListDropdown>
         </ScrollArea>
       </div>
     );
