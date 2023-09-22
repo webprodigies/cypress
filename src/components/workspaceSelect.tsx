@@ -17,7 +17,8 @@ import { Separator } from './ui/separator';
 import Image from 'next/image';
 import Logo from '../../public/cypresslogo.svg';
 import { Button } from './ui/button';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useMemo } from 'react';
 
 interface WorkspaceSelectProps {
@@ -30,8 +31,9 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
   sharedWorkspaces,
   collaboratingWorkspaces,
 }) => {
-  const params = useParams() || { workspaceId: 'Workspace' };
-
+  const params = useParams();
+  const def = useMemo(() => String(params.workspaceId || 'Cypress'), []);
+  const router = useRouter();
   return (
     <article className="flex justify-center items-center gap-2 mb-4">
       <Image
@@ -41,7 +43,8 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
         height={42}
       />
       <Select
-        defaultValue={params.workspaceId ? String(params.workspaceId) : ''}
+        onValueChange={(value) => router.push(`/dashboard/${value}`)}
+        defaultValue={def}
       >
         <SelectTrigger className="w-full h-12 border-none">
           <div className="text-white w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap text-lg text-left ">
@@ -50,8 +53,14 @@ const WorkspaceSelect: React.FC<WorkspaceSelectProps> = ({
             </span>
           </div>
         </SelectTrigger>
-        <SelectContent className="h-[190px] overflow-scroll p-2">
-          <SelectGroup>
+        <SelectContent className="h-[190px] group overflow-scroll p-2">
+          <SelectGroup className="">
+            <SelectItem
+              className="group-data-[state=open]:hidden"
+              value="Cypress"
+            >
+              Cypress
+            </SelectItem>
             <SelectLabel className="text-muted-foreground pl-0">
               Private
             </SelectLabel>

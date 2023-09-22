@@ -1,3 +1,4 @@
+'use client';
 import { ICON_NAMES, ICON_NAME_MAPPING } from '@/lib/constants';
 import {
   AccordionContent,
@@ -5,7 +6,11 @@ import {
   AccordionTrigger,
 } from './ui/accordion';
 import clsx from 'clsx';
-import { usePathname, useRouter } from 'next/navigation';
+import {
+  usePathname,
+  useRouter,
+  useSelectedLayoutSegments,
+} from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 import CustomDialogTrigger from './customDialogTrigger';
 import TooltipComponent from './tooltip';
@@ -18,14 +23,13 @@ import Link from 'next/link';
 interface DropdownProps {
   title: string;
   id: string;
-  listType: 'workspace' | 'folder' | 'file';
+  listType: 'folder' | 'file';
   iconId: (typeof ICON_NAMES)[number];
   children?: React.ReactNode;
-  onClick: (id: string, type: 'workspace' | 'folder' | 'file') => void;
+  onClick: (id: string, listType: 'folder' | 'file') => void;
   test?: any;
   defaultValue?: string[];
-  disabled: boolean;
-  route: string;
+  disabled?: boolean;
 }
 
 export function Dropdown({
@@ -38,32 +42,34 @@ export function Dropdown({
   test,
   disabled,
   defaultValue,
-  route,
+
   ...props
 }: DropdownProps) {
+  const segments = useSelectedLayoutSegments();
+
   const Icon = ICON_NAME_MAPPING[iconId];
-  const createNew = listType === 'workspace' ? 'folder' : 'file';
-  const isWorkspace = listType === 'workspace';
+  const createNew = listType === 'folder' ? 'folder' : 'file';
+  const isFolder = listType === 'folder';
   const groupIdentifies = clsx(
     'dark:text-white whitespace-nowrap flex justify-between items-center relative',
-    { 'group/workspace': isWorkspace, 'group/folder': !isWorkspace }
+    { 'group/workspace': isFolder, 'group/folder': !isFolder }
   );
   const description =
-    listType === 'workspace'
+    listType === 'folder'
       ? 'Folders allow you group related topics together.'
       : 'File are a powerfull way to express your thoughts.';
 
   const listStyles = clsx('relative ', {
-    'border-none ': isWorkspace,
-    'border-none ml-2': !isWorkspace,
+    'border-none ': isFolder,
+    'border-none ml-2': !isFolder,
   });
 
   const commandStyles = twMerge(
     clsx(
       'h-full pl-3 dark:bg-Neutrals-12 hidden rounded-sm absolute right-0 items-center gap-2 bg-washed-purple-100 justify-center',
       {
-        'group-hover/workspace:flex': isWorkspace,
-        'group-hover/folder:flex': !isWorkspace,
+        'group-hover/workspace:flex': isFolder,
+        'group-hover/folder:flex': !isFolder,
       }
     )
   );
@@ -72,53 +78,55 @@ export function Dropdown({
       value={id}
       className={listStyles}
       {...props}
-      onClick={() => onClick(route, id, listType)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(id, listType);
+      }}
     >
-      <Link href={route}>
-        <AccordionTrigger
-          id={listType}
-          className="hover:no-underline p-2 dark:text-muted-foreground text-sm"
-        >
-          <div className={groupIdentifies}>
-            <div className="flex gap-2 items-center justify-center overflow-hidden ">
-              <CustomDialogTrigger content={<IconSelector />}>
-                <div className="w-[14px] h-[16px]">
-                  <Icon
-                    name={iconId}
-                    size={16}
-                  />
-                </div>
-              </CustomDialogTrigger>
+      <AccordionTrigger
+        id={listType}
+        className="hover:no-underline p-2 dark:text-muted-foreground text-sm"
+      >
+        <div className={groupIdentifies}>
+          <div className="flex gap-2 items-center justify-center overflow-hidden ">
+            <CustomDialogTrigger content={<IconSelector />}>
+              <div className="w-[14px] h-[16px]">
+                <Icon
+                  name={iconId}
+                  size={16}
+                />
+              </div>
+            </CustomDialogTrigger>
 
-              <span className="overflow-ellipsis overflow-hidden w-[140px]">
-                {title}
-              </span>
-            </div>
+            <span className="overflow-ellipsis overflow-hidden w-[140px]">
+              {title}
+            </span>
+          </div>
 
-            <div className={commandStyles}>
-              <TooltipComponent message="Edit">
-                <MoreHorizontalIcon
+          <div className={commandStyles}>
+            <TooltipComponent message="Edit">
+              <MoreHorizontalIcon
+                size={15}
+                className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+              />
+            </TooltipComponent>
+
+            <TooltipComponent message="Add Folder">
+              <CustomDialogTrigger
+                header={`Create a new ${createNew}`}
+                description={description}
+                content={<WorkspaceEditor type={createNew} />}
+              >
+                <PlusIcon
                   size={15}
                   className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
                 />
-              </TooltipComponent>
-
-              <TooltipComponent message="Add Folder">
-                <CustomDialogTrigger
-                  header={`Create a new ${createNew}`}
-                  description={description}
-                  content={<WorkspaceEditor type={createNew} />}
-                >
-                  <PlusIcon
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomDialogTrigger>
-              </TooltipComponent>
-            </div>
+              </CustomDialogTrigger>
+            </TooltipComponent>
           </div>
-        </AccordionTrigger>
-      </Link>
+        </div>
+      </AccordionTrigger>
+
       <AccordionContent>{children}</AccordionContent>
     </AccordionItem>
   );

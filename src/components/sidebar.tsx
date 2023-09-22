@@ -9,7 +9,7 @@ import {
   getSharedWorkspaces,
 } from '@/lib/supabase/queries';
 import { ScrollArea } from './ui/scroll-area';
-import ListWorkspaces from './listWorkSpaces';
+import { MultipleDropdownContainer } from './listDropdown';
 
 interface SidebarProps {}
 
@@ -34,28 +34,10 @@ const Sidebar: React.FC<SidebarProps> = async () => {
           sharedWorkspaces={sharedWorkspaces}
         />
         <ScrollArea className="overflow-scroll relative h-full">
-          <div className="pointer-events-none w-full absolute top-0 h-20 bg-gradient-to-b from-background to-transparent z-40" />
-          <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
-          {/* {privateWorkspaces && (
-            <ListWorkspaces
-              className="mt-12"
-              workspaceCategory={privateWorkspaces}
-              listTitle="PRIVATE"
-            />
-          )}
-          {sharedWorkspaces && (
-            <ListWorkspaces
-              workspaceCategory={sharedWorkspaces}
-              listTitle="SHARED"
-            />
-          )}
-          {collaboratedWorkspaces && (
-            <ListWorkspaces
-              workspaceCategory={collaboratedWorkspaces}
-              listTitle="COLLABORATING"
-              className="mb-10"
-            />
-          )} */}
+          <div className="pointer-events-none w-full absolute top-0 h-12 bg-gradient-to-b from-background to-transparent z-40" />
+          <div className="pointer-events-none w-full absolute bottom-0 h-12 bg-gradient-to-t from-background to-transparent z-40" />
+
+          <MultipleDropdownContainer />
         </ScrollArea>
       </div>
     );
