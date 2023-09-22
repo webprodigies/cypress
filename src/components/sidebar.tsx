@@ -2,7 +2,7 @@ import React from 'react';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-import { UserButton } from './userButton';
+import WorkspaceSelect from './workspaceSelect';
 import {
   getPrivateWorkspaces,
   getCollaboratingWorkspaces,
@@ -27,13 +27,16 @@ const Sidebar: React.FC<SidebarProps> = async () => {
       ]);
 
     return (
-      <div className="dark:bg-Neutrals-12 bg-washed-purple-100 hidden md:flex md:flex-col  w-[250px] shrink-0 p-4">
-        <UserButton />
+      <div className=" hidden md:flex md:flex-col  w-[280px] shrink-0 p-4">
+        <WorkspaceSelect
+          privateWorkspaces={privateWorkspaces}
+          collaboratingWorkspaces={collaboratedWorkspaces}
+          sharedWorkspaces={sharedWorkspaces}
+        />
         <ScrollArea className="overflow-scroll relative h-full">
-          <div className="pointer-events-none w-full absolute top-0 h-20 bg-gradient-to-b from-Neutrals-12 to-transparent z-40" />
-          <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-Neutrals-12 to-transparent z-40" />
-          <div></div>
-          {privateWorkspaces && (
+          <div className="pointer-events-none w-full absolute top-0 h-20 bg-gradient-to-b from-background to-transparent z-40" />
+          <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
+          {/* {privateWorkspaces && (
             <ListWorkspaces
               className="mt-12"
               workspaceCategory={privateWorkspaces}
@@ -52,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = async () => {
               listTitle="COLLABORATING"
               className="mb-10"
             />
-          )}
+          )} */}
         </ScrollArea>
       </div>
     );

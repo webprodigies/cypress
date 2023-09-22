@@ -1,12 +1,12 @@
-
-import { Button } from '@/components/ui/button';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import db from '@/lib/supabase/db';
+import { workspaces } from '@/lib/supabase/schema';
+import { eq } from 'drizzle-orm';
 import React from 'react';
 
-const Dashboard = () => {
+const Dashboard = async ({ params }: { params: { workspaceId: string } }) => {
   return (
-    <div className="w-full">
-
+    <div className="overflow-scroll h-screen">
+      Viewing Dashboard.<br></br>
     </div>
   );
 };

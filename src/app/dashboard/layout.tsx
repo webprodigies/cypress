@@ -4,6 +4,7 @@ import React from 'react';
 interface LayoutProps {
   children: React.ReactNode;
 }
+
 /*
 We do not authenticate in this page because Nextjs does not RE RENDER the page during navigation. What this means is
 when the request is first made to dashboard for example, the layout is pre rendered on the server and the dashboard 
