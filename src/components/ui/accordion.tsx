@@ -37,6 +37,7 @@ const AccordionTrigger = React.forwardRef<
       )}
       {...props}
     >
+      {/* //changed disabled */}
       {!disabled && (
         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
       )}
@@ -57,8 +58,7 @@ const AccordionContent = React.forwardRef<
     )}
     {...props}
   >
-    {/* CHANGE pb-4 */}
-    <div className="pb-1 pt-0">{children}</div>
+    <div className="pb-4 pt-0">{children}</div>
   </AccordionPrimitive.Content>
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;

@@ -36,6 +36,11 @@ import client2 from '../../public/client2.png';
 import client3 from '../../public/client3.png';
 import client4 from '../../public/client4.png';
 import client5 from '../../public/client5.png';
+import CypressHomeIcon from '@/components/icons/cypressHomeIcon';
+import CypressMessageIcon from '@/components/icons/cypressMessageIcon';
+import CypressSettingsIcon from '@/components/icons/cypressSettingsIcon';
+import CypressTemplateIcon from '@/components/icons/cypressTemplatesIcon';
+import CypressMarketPlaceIcon from '@/components/icons/cypressMarketIcon';
 
 export const CLIENTS = [
   { alt: 'client1', logo: client1 },

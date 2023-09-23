@@ -1,5 +1,10 @@
 import { InferSelectModel } from 'drizzle-orm';
-import { folders, profiles, workspaces } from '../../../migrations/schema';
+import {
+  files,
+  folders,
+  profiles,
+  workspaces,
+} from '../../../migrations/schema';
 import { ICON_NAMES } from '../constants';
 
 export type Json =
@@ -176,6 +181,11 @@ export type Folder = {
   [T in keyof InferSelectModel<typeof folders>]: T extends 'iconId'
     ? (typeof ICON_NAMES)[number]
     : InferSelectModel<typeof folders>[T];
+};
+export type File = {
+  [T in keyof InferSelectModel<typeof files>]: T extends 'iconId'
+    ? (typeof ICON_NAMES)[number]
+    : InferSelectModel<typeof files>[T];
 };
 // export type File = {
 //   [T in keyof InferSelectModel<typeof >]: T extends 'iconId'

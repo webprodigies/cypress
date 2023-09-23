@@ -6,7 +6,6 @@ import { memo } from 'react';
 interface IconProps extends LucideProps {
   name: keyof typeof dynamicIconImports;
 }
-console.log('INVOKED');
 
 function someComponent({ name, ...props }: IconProps) {
   const LucideIcon = dynamic(dynamicIconImports[name], {

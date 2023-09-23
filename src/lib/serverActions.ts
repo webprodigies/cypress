@@ -4,6 +4,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import { FormSchema } from './types';
+import { revalidatePath } from 'next/cache';
 
 export async function actionLoginUser({
   email,
@@ -39,5 +40,4 @@ export async function actionSignUpUser({
 
   return response;
 }
-
 

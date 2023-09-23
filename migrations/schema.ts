@@ -34,6 +34,14 @@ export const folders = pgTable("folders", {
 	iconId: text("icon_id").notNull(),
 });
 
+export const files = pgTable("files", {
+	id: uuid("id").defaultRandom().notNull(),
+	folderId: uuid("folder_id").notNull().references(() => folders.folderId, { onDelete: "cascade" } ),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	title: text("title").notNull(),
+	iconId: text("icon_id").notNull(),
+});
+
 export const collaborators = pgTable("collaborators", {
 	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
