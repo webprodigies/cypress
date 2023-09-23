@@ -18,7 +18,10 @@ import {
 } from './supabase.types';
 import { randomUUID } from 'crypto';
 
-export const getPrivateWorkspaces = async (userId: string) => {
+export const getPrivateWorkspaces = async (userId: string | null) => {
+  if (!userId) {
+    return [];
+  }
   const privateWorkspaces = (await db
     .select({
       id: workspaces.id,
@@ -63,6 +66,7 @@ export const createPrivateWorkspace = async ({
 
 //These are the workspaces the user is collaborating on
 export const getCollaboratingWorkspaces = async (userId: string) => {
+  if (!userId) return [];
   const collaboratedWorkspaces = (await db
     .select({
       id: workspaces.id,
@@ -80,6 +84,7 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
 };
 
 export const getSharedWorkspaces = async (userId: string) => {
+  if (!userId) return [];
   const sharedWorkspaces = (await db
     .select({
       id: workspaces.id,
@@ -107,6 +112,7 @@ export const getFolders = async (workspaceId: string) => {
 };
 
 export const getFiles = async (folderId: string) => {
+  if (!folderId) return [];
   if (folderId) {
     const results = (await db
       .select()

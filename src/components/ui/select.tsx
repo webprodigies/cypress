@@ -77,7 +77,7 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+>(({ className, onClick, children, ...props }, ref) => (
   // CHANDED Changed the focus to muted/40
   <SelectPrimitive.Item
     ref={ref}
