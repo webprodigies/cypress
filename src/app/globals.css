@@ -74,3 +74,8 @@ body {
     transform: translateX(-100%);
   }
 }
+/* 
+.dotPattern {
+  background-image: radial-gradient(rgb(29, 29, 29) 1px, transparent 1px);
+  background-size: 30px 30px;
+} */

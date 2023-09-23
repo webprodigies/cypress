@@ -90,17 +90,15 @@ export function Dropdown({
     const [workspaceId, folderId, fileId] = pathname
       .split('/dashboard/')[1]
       .split('/');
-    console.log(
-      pathname.includes(accordianId)
-        ? 'NOT NAVIGATING'
-        : `/dashboard/${workspaceId}/${accordianId}`
-    );
+
     if (type === 'folder') {
       router.push(`/dashboard/${workspaceId}/${accordianId}`);
     }
     if (type === 'file') {
-      console.log(`1c928462-cca5-4fac-a3de-9c917d34e4b4folder${accordianId}`);
-      router.push(`/dashboard/${workspaceId}/${folderId}/${accordianId}`);
+      const fileFolderRelation = accordianId.split('folder');
+      router.push(
+        `/dashboard/${workspaceId}/${fileFolderRelation[0]}/${fileFolderRelation[1]}`
+      );
     }
   };
 
@@ -120,7 +118,7 @@ export function Dropdown({
         disabled={listType === 'file'}
       >
         <div className={groupIdentifies}>
-          <div className="flex gap-2 items-center justify-center overflow-hidden ">
+          <div className="flex gap-4 items-center justify-center overflow-hidden ">
             <CustomDialogTrigger content={<IconSelector />}>
               {listType === 'native' ? (
                 <div className="w-[14px] h-[16px] flex items-center ">
@@ -135,7 +133,7 @@ export function Dropdown({
                 </div>
               )}
             </CustomDialogTrigger>
-            <span className="overflow-ellipsis overflow-hidden w-[140px] cursor-pointer">
+            <span className="overflow-ellipsis text-Neutrals-7 overflow-hidden w-[140px] cursor-pointer">
               {title}
             </span>
           </div>
@@ -181,16 +179,19 @@ export function Dropdown({
           )}
         </div>
       </AccordionTrigger>
-      <AccordionContent>
-        {files.map((file, index) => (
-          <Dropdown
-            key={file.id}
-            title={file.title}
-            listType="file"
-            id={file.id}
-            iconId={file.iconId}
-          />
-        ))}
+      <AccordionContent className="">
+        {files.map((file, index) => {
+          const customfileId = `${id}folder${file.id}`;
+          return (
+            <Dropdown
+              key={file.id}
+              title={file.title}
+              listType="file"
+              id={customfileId}
+              iconId={file.iconId}
+            />
+          );
+        })}
       </AccordionContent>
     </AccordionItem>
   );

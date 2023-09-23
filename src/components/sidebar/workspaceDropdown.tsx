@@ -51,13 +51,13 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = async ({
       />
       <ClientSelector defaultValue={String(workspaceId) || 'Workspace'}>
         <SelectTrigger className="w-full h-12 border-none">
-          <div className="text-white w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap text-lg text-left ">
+          <div className="w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap text-lg text-left ">
             <span className="">
-              <SelectValue placeholder="Workspace" />
+              <SelectValue placeholder="Cypress" />
             </span>
           </div>
         </SelectTrigger>
-        <SelectContent className="h-[190px] group overflow-scroll p-2">
+        <SelectContent className="h-[190px]  group overflow-scroll p-2">
           <SelectGroup className="">
             <SelectItem
               className="group-data-[state=open]:hidden"

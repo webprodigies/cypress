@@ -9,7 +9,7 @@ interface TempDropdownProps {
 
 const TempDropdown: FC<TempDropdownProps> = async ({ workspaceFolders }) => {
   return (
-    <ClientAccordian className="mt-10">
+    <ClientAccordian className="">
       {workspaceFolders.map((folder, index) => (
         <Dropdown
           key={folder.folderId}

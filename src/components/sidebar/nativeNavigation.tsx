@@ -49,14 +49,14 @@ const NativeNavigation: FC<NativeNavigationProps> = ({ myWorkspaceId }) => {
           const link =
             menu.id === 'dashboard' ? `/dashboard/${myWorkspaceId}` : '';
           return (
+            // WIP Add links for others too
             <li
               onClick={async () => {
                 if (link) {
-                  alert(link);
                   router.push(link);
                 }
               }}
-              className="group/native flex text-muted-foreground transition-all hover:text-white cursor-pointer py-1 gap-2"
+              className="group/native flex text-Neutrals-7 transition-all hover:dark:text-white cursor-pointer py-1 gap-2"
             >
               <menu.customIcon></menu.customIcon>
               <span>{menu.title}</span>
