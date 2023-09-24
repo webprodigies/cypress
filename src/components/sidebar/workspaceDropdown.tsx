@@ -57,7 +57,7 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = async ({
             </span>
           </div>
         </SelectTrigger>
-        <SelectContent className="h-[190px]  group overflow-scroll p-2">
+        <SelectContent className="h-[190px] bg-black/10 backdrop-blur-lg group overflow-scroll p-2">
           <SelectGroup className="">
             <SelectItem
               className="group-data-[state=open]:hidden"

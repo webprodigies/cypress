@@ -18,6 +18,7 @@
     "studio": "npx drizzle-kit studio"
   },
   "dependencies": {
+    "@editorjs/editorjs": "^2.28.0",
     "@hookform/resolvers": "^3.3.1",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-avatar": "^1.0.3",

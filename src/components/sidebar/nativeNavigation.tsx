@@ -51,6 +51,7 @@ const NativeNavigation: FC<NativeNavigationProps> = ({ myWorkspaceId }) => {
           return (
             // WIP Add links for others too
             <li
+              key={menu.id}
               onClick={async () => {
                 if (link) {
                   router.push(link);
