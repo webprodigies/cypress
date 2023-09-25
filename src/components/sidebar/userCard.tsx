@@ -7,6 +7,8 @@ import { cookies } from 'next/headers';
 import db from '@/lib/supabase/db';
 import { profiles } from '../../../migrations/schema';
 import { eq } from 'drizzle-orm';
+import LogoutButton from '../logoutButton';
+import { LogOut } from 'lucide-react';
 const UserCard = async () => {
   const supabase = createServerComponentClient({ cookies });
   const {
@@ -35,6 +37,9 @@ const UserCard = async () => {
           </small>
         </div>
       </aside>
+      <LogoutButton>
+        <LogOut></LogOut>
+      </LogoutButton>
       <ModeToggle />
     </article>
   );

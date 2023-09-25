@@ -16,7 +16,7 @@ const CypressMarketPlaceIcon: FC<CypressMarketPlaceIconProps> = () => {
       />
       <path
         fill-rule="evenodd"
-        clip-rule="evenodd"
+        clipRule="evenodd"
         d="M8 6C8 3.79086 9.79086 2 12 2C14.2091 2 16 3.79086 16 6V8C16 8.55228 15.5523 9 15 9C14.4477 9 14 8.55228 14 8V6C14 4.89543 13.1046 4 12 4C10.8954 4 10 4.89543 10 6V8C10 8.55228 9.55228 9 9 9C8.44772 9 8 8.55228 8 8V6Z"
         className={`dark:fill-[#817EB5]  fill-Neutrals-7 transition-all group-hover/native:fill-washed-blue-500`}
       />

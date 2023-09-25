@@ -17,6 +17,7 @@ import {
   WorkspacesWithIconIds,
 } from './supabase.types';
 import { randomUUID } from 'crypto';
+import { OutputData } from '@editorjs/editorjs';
 
 export const getPrivateWorkspaces = async (userId: string | null) => {
   if (!userId) {
@@ -132,3 +133,10 @@ export const getFiles = async (folderId: string) => {
 //       ...state,
 //     ]
 //   );
+
+export const updateBlocks = async (workspaceId: string, blocks: any) => {
+  const response = await db
+    .update(workspaces)
+    .set({ blocks: blocks })
+    .where(eq(workspaces.id, workspaceId));
+};

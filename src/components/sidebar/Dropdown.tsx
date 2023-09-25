@@ -51,7 +51,6 @@ export function Dropdown({
   useEffect(() => {
     const fetchFolders = async () => {
       if (listType === 'folder') {
-        console.log(listType);
         const response = await getFiles(id);
         setFiles(response);
       }

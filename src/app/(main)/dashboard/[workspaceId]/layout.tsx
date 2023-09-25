@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
     <main className="flex overflow-hidden h-screen w-screen ">
       <Sidebar params={params} />
       {/* // CHANGED the radial gradient here is custom look inside the css file*/}
-      <div className=" dark:border-Neutrals-12/70 border-l-[1px] w-full relative overflow-scroll  dotPattern">
+      <div className=" dark:border-Neutrals-12/70 border-l-[1px] w-full relative overflow-scroll dotPattern">
         {children}
       </div>
     </main>

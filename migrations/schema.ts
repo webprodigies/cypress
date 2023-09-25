@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, pgEnum, uuid, timestamp, text, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, pgEnum, uuid, timestamp, text, json, primaryKey } from "drizzle-orm/pg-core"
 
 import { sql } from "drizzle-orm"
 export const keyStatus = pgEnum("key_status", ['default', 'valid', 'invalid', 'expired'])
@@ -7,6 +7,8 @@ export const aalLevel = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
 export const codeChallengeMethod = pgEnum("code_challenge_method", ['s256', 'plain'])
 export const factorStatus = pgEnum("factor_status", ['unverified', 'verified'])
 export const factorType = pgEnum("factor_type", ['totp', 'webauthn'])
+export const equalityOp = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
+export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ERROR'])
 
 
 export const workspaces = pgTable("workspaces", {
@@ -15,6 +17,7 @@ export const workspaces = pgTable("workspaces", {
 	workspaceOwner: uuid("workspace_owner").notNull().references(() => profiles.id, { onDelete: "cascade" } ),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	blocks: json("blocks"),
 });
 
 export const profiles = pgTable("profiles", {
@@ -32,6 +35,7 @@ export const folders = pgTable("folders", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	blocks: text("blocks"),
 });
 
 export const files = pgTable("files", {
@@ -40,6 +44,7 @@ export const files = pgTable("files", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	blocks: json("blocks"),
 });
 
 export const collaborators = pgTable("collaborators", {
