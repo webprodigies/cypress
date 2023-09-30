@@ -1,1 +1,0 @@
-ALTER TABLE "files" RENAME COLUMN "file_id" TO "id";

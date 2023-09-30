@@ -14,37 +14,73 @@ import {
 } from './editorText';
 import Image from 'next/image';
 import { EditorCallout, EditorWarning } from './editorCallout';
-import { workspace } from '@/lib/supabase/supabase.types';
+import { fakeType, workspace } from '@/lib/supabase/supabase.types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { updateBlocks } from '@/lib/supabase/queries';
 
 interface EditorProps {
-  defaultData: workspace[] | [];
+  defaultData: fakeType[] | [];
 }
+type Blocks = { blocks: [] | OutputBlockData[] };
 
 const Editor: React.FC<EditorProps> = ({ defaultData }) => {
   const supabase = createClientComponentClient();
 
   //This will be an object with blocks : an array
-  const [defaultBlocks, setDefaultBlocks] = useState<any>(
-    defaultData[0].blocks
+
+  const defaultBlocks = useMemo(
+    () => defaultData[0].blocks as Blocks,
+    [defaultData]
   );
-  console.log(defaultBlocks);
+
+  const [updatingBlocks, setUpdatingBlocks] = useState(false);
+  const [socketMounted, setSocketMounted] = useState(false);
+
   //Blocks will be stringify
-  const [blocks, setBlocks] = useState<any>('');
+  const [blocks, setBlocks] = useState<string>(
+    JSON.stringify({ blocks: defaultBlocks.blocks })
+  );
   const editorRef = useRef<EditorJS>();
 
-  function findDifferentBlock(websocketBlocks: any) {
-    const parsedBlocks = JSON.parse(blocks);
-    const changes: any = [];
+  function findDifferentBlock(websocketBlocks: OutputBlockData[]) {
+    let parsedLocalBlocks;
+
+    if (blocks) {
+      try {
+        parsedLocalBlocks = JSON.parse(blocks) as Blocks;
+        // Proceed with parsedBlocks...
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+        return [];
+      }
+    } else return [];
+    const changes: {
+      type: 'add' | 'update' | 'delete';
+      blockId?: string | undefined; // the block ID in the OutputBlockData is for somreason undefined
+      data: OutputBlockData;
+      index: number;
+    }[] = [];
+    console.log(websocketBlocks, parsedLocalBlocks);
+
+    /**
+    insert(
+    type?: string,
+    data?: BlockToolData,
+    config?: ToolConfig,
+    index?: number,
+    needToFocus?: boolean,
+    replace?: boolean,
+    id?: string,
+  ): BlockAPI;
+     */
 
     const localBlockMap = new Map(
-      parsedBlocks.map((block: any) => [block.id, block])
+      parsedLocalBlocks.blocks.map((block) => [block.id, block])
     );
 
     // Find updates and deletions
-    websocketBlocks.forEach((block: any) => {
-      const localBlock: any = localBlockMap.get(block.id);
+    websocketBlocks.forEach((block, index) => {
+      const localBlock = localBlockMap.get(block.id);
 
       if (localBlock) {
         if (JSON.stringify(localBlock.data) !== JSON.stringify(block.data)) {
@@ -52,11 +88,13 @@ const Editor: React.FC<EditorProps> = ({ defaultData }) => {
             type: 'update',
             blockId: block.id,
             data: block.data,
+            index,
           });
         }
       } else {
-        // Block exists in websocketBlocks but not in parsedBlocks
+        // Block exists in websocketBlocks but not in localblocksMap
         changes.push({
+          index,
           type: 'add',
           blockId: block.id,
           data: block.data,
@@ -65,11 +103,12 @@ const Editor: React.FC<EditorProps> = ({ defaultData }) => {
     });
 
     // Find additions
-    parsedBlocks.forEach((block: any) => {
-      if (!websocketBlocks.some((wb: any) => wb.id === block.id)) {
+    parsedLocalBlocks.blocks.forEach((block, index) => {
+      if (!websocketBlocks.some((wb) => wb.id === block.id)) {
         changes.push({
           type: 'delete',
           blockId: block.id,
+          index,
           data: block.data,
         });
       }
@@ -79,33 +118,53 @@ const Editor: React.FC<EditorProps> = ({ defaultData }) => {
   }
 
   useEffect(() => {
-    if (blocks !== JSON.stringify(defaultBlocks) && blocks) {
+    if (blocks !== JSON.stringify(defaultBlocks) && blocks && !updatingBlocks) {
       console.log('UPDATED DATABASE');
       const response = updateBlocks(defaultData[0].id, JSON.parse(blocks));
     }
   }, [blocks]);
 
   useEffect(() => {
-    const channel = supabase
+    if (socketMounted) return;
+    let channel: any;
+    channel = supabase
       .channel('content-updated')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'workspaces' },
-        (payload) => {
-          console.log('WEBSOCKET FIRED');
-          setDefaultBlocks(payload.new.blocks);
+        (payload: { new: { blocks: Blocks } }) => {
+          setUpdatingBlocks(true);
+          console.log('🔥 WEBSOCKET FIRED', payload);
           //WIP set it to an empty object by defauly in the schema
-          // type Response = { blocks: OutputBlockData[] } | { blocks: [] };
-          // const newBlocks: Response = payload.new.blocks;
-
-          // const differentBlock = findDifferentBlock(newBlocks);
+          const changesToBeMade = findDifferentBlock(payload.new.blocks.blocks);
+          changesToBeMade.forEach((change) => {
+            switch (change.type) {
+              case 'update':
+                return editorRef.current?.blocks.update(
+                  change.blockId as string,
+                  change.data
+                );
+              case 'delete':
+                return editorRef.current?.blocks.delete(change.index);
+              case 'add':
+                return editorRef.current?.blocks.insert(
+                  change.data.type,
+                  change.data.data,
+                  undefined,
+                  change.index
+                );
+            }
+          });
+          setUpdatingBlocks(false);
         }
       )
       .subscribe();
+    setSocketMounted(true);
+
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, blocks]);
+  }, [supabase, blocks, editorRef.current]);
 
   useEffect(() => {
     const initEditor = async () => {
@@ -113,12 +172,12 @@ const Editor: React.FC<EditorProps> = ({ defaultData }) => {
       const editor = new EditorJs({
         // data: data,
         holder: 'editorjs',
-        placeholder: 'Click to enter text.',
         defaultBlock: 'text',
         onReady: () => {
-          editor.render(defaultBlocks);
+          if (defaultBlocks.blocks.length > 0) editor.render(defaultBlocks);
         },
         onChange: async (api, events: BlockMutationEvent) => {
+          console.log('Editor Change Occured');
           const exportedData = await editor.save();
           setBlocks(JSON.stringify({ blocks: exportedData.blocks }));
         },
@@ -147,7 +206,6 @@ const Editor: React.FC<EditorProps> = ({ defaultData }) => {
           alt="Folder Banner Image"
         />
       </div>
-
       <div className="py-6 px-8 ">
         <div
           id="editorjs"

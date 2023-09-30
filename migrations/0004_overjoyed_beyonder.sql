@@ -1,1 +1,0 @@
-ALTER TABLE "workspaces" ALTER COLUMN "created_at" DROP NOT NULL;

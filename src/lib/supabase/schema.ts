@@ -64,7 +64,7 @@ export const workspaces = pgTable('workspaces', {
     .references(() => profiles.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   iconId: text('icon_id').notNull(),
-  blocks: json('blocks'),
+  blocks: json('blocks').default({ blocks: [] }),
 });
 
 export const profiles = pgTable('profiles', {
@@ -86,7 +86,7 @@ export const folders = pgTable('folders', {
     .notNull(),
   title: text('title').notNull(),
   iconId: text('icon_id').notNull(),
-  blocks: text('blocks'),
+  blocks: json('blocks').default({ blocks: [] }).notNull(),
 });
 
 export const files = pgTable('files', {
@@ -99,7 +99,7 @@ export const files = pgTable('files', {
     .notNull(),
   title: text('title').notNull(),
   iconId: text('icon_id').notNull(),
-  blocks: json('blocks'),
+  blocks: json('blocks').default({ blocks: [] }).notNull(),
 });
 
 export const collaborators = pgTable(

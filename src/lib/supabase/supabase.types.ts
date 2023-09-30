@@ -6,6 +6,7 @@ import {
   workspaces,
 } from '../../../migrations/schema';
 import { ICON_NAMES } from '../constants';
+import { OutputBlockData } from '@editorjs/editorjs';
 
 export type Json =
   | string
@@ -49,20 +50,63 @@ export interface Database {
           }
         ];
       };
-      folders: {
+      files: {
         Row: {
+          blocks: Json | null;
           created_at: string;
           folder_id: string;
+          icon_id: string;
+          id: string;
+          title: string;
+        };
+        Insert: {
+          blocks?: Json | null;
+          created_at?: string;
+          folder_id: string;
+          icon_id: string;
+          id?: string;
+          title: string;
+        };
+        Update: {
+          blocks?: Json | null;
+          created_at?: string;
+          folder_id?: string;
+          icon_id?: string;
+          id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'files_folder_id_folders_folder_id_fk';
+            columns: ['folder_id'];
+            referencedRelation: 'folders';
+            referencedColumns: ['folder_id'];
+          }
+        ];
+      };
+      folders: {
+        Row: {
+          blocks: string | null;
+          created_at: string;
+          folder_id: string;
+          icon_id: string;
+          title: string;
           workspace_id: string;
         };
         Insert: {
+          blocks?: string | null;
           created_at?: string;
           folder_id?: string;
+          icon_id: string;
+          title: string;
           workspace_id: string;
         };
         Update: {
+          blocks?: string | null;
           created_at?: string;
           folder_id?: string;
+          icon_id?: string;
+          title?: string;
           workspace_id?: string;
         };
         Relationships: [
@@ -103,21 +147,24 @@ export interface Database {
       };
       workspaces: {
         Row: {
-          created_at: string;
+          blocks: Json | null;
+          created_at: string | null;
           icon_id: string;
           id: string;
           title: string;
           workspace_owner: string;
         };
         Insert: {
-          created_at?: string;
+          blocks?: Json | null;
+          created_at?: string | null;
           icon_id: string;
           id?: string;
           title: string;
           workspace_owner: string;
         };
         Update: {
-          created_at?: string;
+          blocks?: Json | null;
+          created_at?: string | null;
           icon_id?: string;
           id?: string;
           title?: string;
@@ -176,6 +223,10 @@ export type CollaboratedWorkspace = {
 };
 
 export type workspace = InferSelectModel<typeof workspaces>;
+export type fakeType = Omit<InferSelectModel<typeof workspaces>, 'blocks'> & {
+  blocks: { blocks: [] } | OutputBlockData[];
+};
+export type testType = workspace & { iconId: 'perrin' | 'something' };
 export type profiles = InferSelectModel<typeof profiles>;
 export type Folder = {
   [T in keyof InferSelectModel<typeof folders>]: T extends 'iconId'

@@ -15,7 +15,7 @@ const CypressSettingsIcon: FC<CypressSettingsIconProps> = () => {
         className={`dark:fill-[#2B2939] fill-[#D3D3D3] text-xl transition-all group-hover/native:fill-washed-purple-400`}
       />
       <path
-        fill-rule="evenodd"
+        fillRule="evenodd"
         clipRule="evenodd"
         d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
         className={`dark:fill-[#817EB5]  fill-Neutrals-7 transition-all group-hover/native:fill-washed-blue-500`}
