@@ -18,6 +18,7 @@ export const workspaces = pgTable("workspaces", {
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
 	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const profiles = pgTable("profiles", {
@@ -36,6 +37,7 @@ export const folders = pgTable("folders", {
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
 	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const files = pgTable("files", {
@@ -45,6 +47,7 @@ export const files = pgTable("files", {
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
 	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const collaborators = pgTable("collaborators", {

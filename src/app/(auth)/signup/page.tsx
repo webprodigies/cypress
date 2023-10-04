@@ -48,7 +48,11 @@ const SignUpFormSchema = z
 export default function SignUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const codeExchangeError = searchParams.get('error_description');
+
+  const codeExchangeError = useMemo(() => {
+    if (!searchParams) return '';
+    return searchParams.get('error_description');
+  }, [searchParams]);
   const [submitError, setSubmitError] = useState<string>('');
   const [confirmation, setConfirmation] = useState<boolean>(false);
   const confirmationAndErrorStyles = useMemo(

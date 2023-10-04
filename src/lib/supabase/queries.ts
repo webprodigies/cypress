@@ -1,5 +1,6 @@
 'use server';
-import { and, eq, ne, notExists, or } from 'drizzle-orm';
+
+import { and, eq, isNull, ne, notExists, or } from 'drizzle-orm';
 import {
   collaborators,
   files,
@@ -14,7 +15,7 @@ import {
   Folder,
   PrivateWorkspaces,
   SharedWorkspaces,
-  WorkspacesWithIconIds,
+  workspace,
 } from './supabase.types';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
@@ -107,11 +108,14 @@ export const getFolders = async (workspaceId: string) => {
       .select()
       .from(folders)
       .orderBy(folders.createdAt)
-      .where(eq(folders.workspaceId, workspaceId))) as Folder[] | [];
+      .where(
+        and(eq(folders.workspaceId, workspaceId), isNull(folders.inTrash))
+      )) as Folder[] | [];
     return results;
   }
   return [];
 };
+
 
 export const createFolder = async (
   workspaceId: string,
@@ -143,7 +147,10 @@ export const getFiles = async (folderId: string) => {
     const results = (await db
       .select()
       .from(files)
-      .where(eq(files.folderId, folderId))) as File[];
+      .orderBy(files.createdAt)
+      .where(
+        and(eq(files.folderId, folderId), isNull(files.inTrash))
+      )) as File[];
     return results;
   }
   return [];
@@ -157,6 +164,20 @@ export const updateWorkspaceFile = async (
     .update(workspaces)
     .set({ data })
     .where(eq(workspaces.id, workspaceId));
+};
+
+export const updateFolderFile = async (folderId: string, data: string) => {
+  const response = await db
+    .update(folders)
+    .set({ data })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateFileFile = async (fileId: string, data: string) => {
+  const response = await db
+    .update(files)
+    .set({ data })
+    .where(eq(files.id, fileId));
 };
 
 export const updateEmojiWorkspace = async (
@@ -200,3 +221,22 @@ export const updateTitleFile = async (fileId: string, title: string) => {
     .set({ title })
     .where(eq(files.id, fileId));
 };
+
+export const sendFolderToTrash = async (folderId: string) => {
+  const response = await db
+    .update(folders)
+    .set({ inTrash: 'This folder is in the trash' })
+    .where(eq(folders.folderId, folderId));
+
+  const resFiles = await getFiles(folderId);
+  resFiles.map(async (file) => {
+    await db
+      .update(files)
+      .set({
+        inTrash: 'This page is in the trash because the folder was deleted',
+      })
+      .where(eq(files.folderId, folderId));
+  });
+};
+
+//rgb(235, 87, 87)

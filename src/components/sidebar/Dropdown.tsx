@@ -1,5 +1,4 @@
 'use client';
-import { ICON_NAMES, ICON_NAME_MAPPING } from '@/lib/constants';
 import {
   AccordionContent,
   AccordionItem,
@@ -9,17 +8,15 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import CustomDialogTrigger from '../customDialogTrigger';
 import TooltipComponent from '../tooltip';
-import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
-import fileCreator from '../fileCreator';
-import IconSelector from '../iconSelector';
+import { Delete, MoreHorizontalIcon, PlusIcon, Trash } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChangeEventHandler, useEffect, useState } from 'react';
-import { getFiles } from '@/lib/supabase/queries';
-import { File } from '@/lib/supabase/supabase.types';
+import { useState } from 'react';
+
 import EmojiPicker from '../emoji-picker';
-import FileCreator from '../fileCreator';
-import FileEditor from '../file-Editor';
-import { useFolders } from '@/lib/providers/file-provider';
+import { useFiles } from '@/lib/providers/file-provider';
+import dynamic from 'next/dynamic';
+import { useFolders } from '@/lib/providers/folder-provider';
+import { updateTitleFile, updateTitleFolder } from '@/lib/supabase/queries';
 
 interface DropdownProps {
   title: string;
@@ -48,6 +45,8 @@ export function Dropdown({
   ...props
 }: DropdownProps) {
   const { folders, setFolders } = useFolders();
+  const CustomAlert = dynamic(() => import('../custom-alert'), { ssr: false });
+  const { files, setFiles } = useFiles();
   const [isEditing, setIsEditing] = useState(false);
   const [folderTitle, setFolderTitle] = useState(title);
   const [fileTitle, setFileTitle] = useState(title);
@@ -56,9 +55,7 @@ export function Dropdown({
 
   const navigatePage = (accordianId: string, type: string) => {
     if (!pathname) return;
-    const [workspaceId, folderId, fileId] = pathname
-      .split('/dashboard/')[1]
-      .split('/');
+    const [workspaceId] = pathname.split('/dashboard/')[1].split('/');
 
     if (type === 'folder') {
       router.push(`/dashboard/${workspaceId}/${accordianId}`);
@@ -76,7 +73,7 @@ export function Dropdown({
     title: string;
     iconId: string;
   }) => {
-    setFolders((currentFolder) => {
+    setFiles((currentFolder) => {
       return currentFolder.map((folder) => {
         if (folder.folderId === id) {
           return {
@@ -87,6 +84,7 @@ export function Dropdown({
                 folderId: id,
                 data: null,
                 createdAt: '',
+                inTrash: '',
                 ...newFile,
               },
             ],
@@ -101,23 +99,38 @@ export function Dropdown({
     setIsEditing(true);
   };
 
-  const handleBlur = () => {
-    if (!fileTitle) setFileTitle(title);
+  const handleBlur = async () => {
+   //If it is a folder
     setIsEditing(false);
+    const folderId = id.split('folder');
+    if (folderId.length === 1) {
+      if (!folderTitle) {
+        setFolderTitle(title);
+        return;
+      }
+      await updateTitleFolder(folderId[0], folderTitle);
+    }
+    //If it is a file
+    if (folderId.length === 2 && folderId[1]) {
+      if (!fileTitle) {
+        setFileTitle(title);
+        return;
+      }
+      await updateTitleFile(folderId[1], fileTitle);
+    }
   };
 
   const fileTitleChange = (e: any) => {
-    setFileTitle(e.target.value);
     const fileAndFolderId = id.split('folder');
     if (fileAndFolderId.length === 2 && fileAndFolderId[1]) {
-      setFolders((currentFolder) =>
-        currentFolder.map((folder) => {
+      setFiles((currentFolders) =>
+        currentFolders.map((folder) => {
           if (folder.folderId === fileAndFolderId[0]) {
             const updatedFiles = folder.files.map((file) => {
               if (file.id === fileAndFolderId[1]) {
                 return {
                   ...file,
-                  title: fileTitle,
+                  title: e.target.value,
                 };
               }
               return file;
@@ -131,14 +144,29 @@ export function Dropdown({
           return folder;
         })
       );
+      setFileTitle(e.target.value);
     }
   };
 
   const folderTitleChange = (e: any) => {
-    if (id.split('folder').length === 1) {
+    const folderId = id.split('folder');
+    if (folderId.length === 1) {
+      setFolders(
+        folders.map((folder) => {
+          if (folder.folderId === folderId[0]) {
+            return {
+              ...folder,
+              title: e.target.value,
+            };
+          }
+          return folder;
+        })
+      );
       setFolderTitle(e.target.value);
     }
   };
+
+  const deleteFolderHandler = () => {};
 
   const isFolder = listType === 'folder';
   const groupIdentifies = clsx(
@@ -153,7 +181,7 @@ export function Dropdown({
 
   const commandStyles = twMerge(
     clsx(
-      'h-full pl-3 dark:bg-Neutrals-12 hidden rounded-sm absolute right-0 items-center gap-2 bg-washed-purple-100 justify-center',
+      'h-full pl-3 bg-background hidden rounded-sm absolute right-0 items-center gap-2 justify-center',
       {
         'group-hover/folder:flex': isFolder,
         'group-hover/file:hidden': !isFolder,
@@ -208,75 +236,46 @@ export function Dropdown({
             />
           </div>
 
-          {listType === 'folder' && (
+          {listType === 'folder' && !isEditing && (
             <div className={commandStyles}>
-              <TooltipComponent message="Edit Folder">
-                <CustomDialogTrigger
-                  header="Edit Folder details"
-                  description="Change the folder name or icon to confirm edits."
-                  content={
-                    <FileEditor
-                      parentId={id}
-                      defaultIcon={iconId}
-                      defaultTitle={title}
-                      type={listType}
-                    />
-                  }
+              <TooltipComponent message="Delete Folder">
+                <CustomAlert
+                  continueHandler={deleteFolderHandler}
+                  title="Are your sure?"
+                  description="This will delete all data related to this folder including files."
+                  continueTitle="Delete"
+                  cancelTitle="Cancel"
                 >
-                  <MoreHorizontalIcon
+                  <Trash
                     size={15}
                     className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomDialogTrigger>
+                  ></Trash>
+                </CustomAlert>
               </TooltipComponent>
 
               <TooltipComponent message="Add File">
-                <CustomDialogTrigger
-                  header="Create a new file"
-                  description="Files are a powerful way to express your thoughts."
-                  content={
-                    <FileCreator
-                      getNewValue={addNewFile}
-                      parent={id}
-                      type="file"
-                    />
-                  }
-                >
-                  <PlusIcon
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomDialogTrigger>
+                <PlusIcon
+                  size={15}
+                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                />
               </TooltipComponent>
             </div>
           )}
-          {listType === 'file' && (
+          {listType === 'file' && !isEditing && (
             <div className="h-full hidden group-hover/file:block rounded-sm absolute right-0 items-center gap-2  justify-center">
-              <TooltipComponent message="Edit">
-                <CustomDialogTrigger
-                  header="Edit file"
-                  description="Change the file name or icon to confirm edits."
-                  content={
-                    <FileEditor
-                      parentId={id}
-                      type="file"
-                      defaultIcon={iconId}
-                      defaultTitle={title}
-                    />
-                  }
-                >
-                  <MoreHorizontalIcon
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomDialogTrigger>
+              <TooltipComponent message="Delete File">
+                <Trash
+                  size={15}
+                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                ></Trash>
               </TooltipComponent>
             </div>
           )}
         </div>
       </AccordionTrigger>
+
       <AccordionContent className="">
-        {folders
+        {files
           .find((folder) => folder.folderId === id)
           ?.files.map((file, index) => {
             const customfileId = `${id}folder${file.id}`;

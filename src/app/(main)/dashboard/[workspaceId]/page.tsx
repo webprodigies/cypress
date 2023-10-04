@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import db from '@/lib/supabase/db';
 import React from 'react';
 import { workspaces } from '../../../../../migrations/schema';
@@ -6,13 +8,13 @@ import { workspace } from '@/lib/supabase/supabase.types';
 import QuillEditor from '@/components/quillEditor/quill';
 
 const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
-  if (!params.workspaceId) return;
-
   const response = (await db
     .select()
     .from(workspaces)
     .where(eq(workspaces.id, params.workspaceId))
     .limit(1)) as workspace[];
+
+  console.log(response);
 
   return (
     <div className="relative ">
@@ -21,6 +23,7 @@ const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
         dirType="workspace"
         fileId={params.workspaceId}
         icon={response[0]?.iconId}
+        title={response[0].title}
       ></QuillEditor>
     </div>
   );

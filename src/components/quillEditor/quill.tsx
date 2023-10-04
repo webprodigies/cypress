@@ -16,11 +16,15 @@ import {
   updateEmojiFile,
   updateEmojiFolder,
   updateEmojiWorkspace,
+  updateFileFile,
+  updateFolderFile,
   updateWorkspaceFile,
 } from '@/lib/supabase/queries';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '../ui/button';
 import EmojiPicker from '../emoji-picker';
+import { useFolders } from '@/lib/providers/folder-provider';
+import { useFiles } from '@/lib/providers/file-provider';
 
 var TOOLBAR_OPTIONS = [
   ['bold', 'italic', 'underline', 'strike'], // toggled buttons
@@ -47,6 +51,7 @@ interface QuillEditorProps {
   fileId: string | undefined;
   dirType: 'workspace' | 'folder' | 'file';
   defaultValue: string | null;
+  title?: string;
 }
 
 const QuillEditor: FC<QuillEditorProps> = ({
@@ -54,16 +59,19 @@ const QuillEditor: FC<QuillEditorProps> = ({
   dirType,
   defaultValue,
   icon,
+  title = undefined,
 }) => {
+  const { folders } = useFolders();
+  const { files } = useFiles();
   const [quill, setQuill] = useState<any>(null);
   const { socket } = useSocket();
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [saving, setSaving] = useState(false);
-
   const [optimisticIcon, setOptimisticIcon] = useOptimistic(
     icon,
     (state: string, newState: string) => newState
   );
+  const [quillTitle, setQuillTitle] = useState<string | undefined>('');
 
   const wrapperRef = useCallback(async (wrapper: any) => {
     if (typeof window !== 'undefined') {
@@ -90,9 +98,25 @@ const QuillEditor: FC<QuillEditorProps> = ({
     else if (dirType === 'file' && fileId) await updateEmojiFile(fileId, icon);
   };
 
+  //GetTitle from folders and files hook
+  useEffect(() => {
+    if (!folders.length || !dirType || !files.length || !fileId) return;
+    if (dirType === 'folder') {
+      setQuillTitle(
+        folders.find((folder) => folder.folderId === fileId)?.title
+      );
+    } else if (dirType === 'file') {
+      setQuillTitle(
+        files
+          .find((folder) => folder.files.find((file) => file.id === fileId))
+          ?.files.find((file) => file.id === fileId)?.title
+      );
+    }
+  }, [folders, dirType, files, fileId]);
+
   //Send Changes for broadcasting to other clients
   useEffect(() => {
-    if (quill === null || socket === null || fileId === null) return;
+    if (quill === null || socket === null || !fileId || !dirType) return;
     const quilHandler = (delta: any, oldDelta: any, source: any) => {
       if (source !== 'user') return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -100,8 +124,14 @@ const QuillEditor: FC<QuillEditorProps> = ({
       const contents = quill.getContents();
       const quillLength = quill.getLength();
       saveTimerRef.current = setTimeout(async () => {
-        if (contents && quillLength !== 1 && fileId)
-          await updateWorkspaceFile(fileId, JSON.stringify(contents));
+        if (contents && quillLength !== 1 && fileId) {
+          if (dirType === 'workspace')
+            await updateWorkspaceFile(fileId, JSON.stringify(contents));
+          if (dirType === 'folder')
+            await updateFolderFile(fileId, JSON.stringify(contents));
+          if (dirType === 'file')
+            await updateFileFile(fileId, JSON.stringify(contents));
+        }
         setSaving(false);
       }, 850);
 
@@ -113,7 +143,7 @@ const QuillEditor: FC<QuillEditorProps> = ({
       quill.off('text-change', quilHandler);
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [quill, socket, fileId]);
+  }, [quill, socket, fileId, dirType]);
 
   //Receiving the changes
   useEffect(() => {
@@ -132,7 +162,7 @@ const QuillEditor: FC<QuillEditorProps> = ({
 
   //Creating socket rooms
   useEffect(() => {
-    if (socket === null || quill === null || fileId === null) return;
+    if (socket === null || quill === null || !fileId) return;
     socket.emit('create-room', fileId);
   }, [quill, socket, fileId]);
 
@@ -154,14 +184,14 @@ const QuillEditor: FC<QuillEditorProps> = ({
         {saving ? (
           <Badge
             variant="secondary"
-            className="bg-orange-600 absolute top-4 right-4 z-50"
+            className="bg-orange-600 absolute top-4 text-white right-4 z-50"
           >
             Saving...
           </Badge>
         ) : (
           <Badge
             variant="secondary"
-            className="bg-emerald-600 absolute top-4 right-4 z-50"
+            className="bg-emerald-600 absolute top-4 text-white right-4 z-50"
           >
             Saved
           </Badge>
@@ -169,7 +199,7 @@ const QuillEditor: FC<QuillEditorProps> = ({
       </div>
 
       <div className="flex justify-center items-center flex-col mt-2 relative ">
-        <div className=" w-full self-center max-w-[800px]  md:px-10 lg:my-8">
+        <div className=" w-full self-center max-w-[800px] flex flex-col px-7 lg:my-8">
           {icon && (
             <div className="text-[80px]">
               <EmojiPicker
@@ -183,9 +213,17 @@ const QuillEditor: FC<QuillEditorProps> = ({
               </EmojiPicker>
             </div>
           )}
+
+          <span className="text-muted-foreground text-3xl font-bold">
+            {title ? title : quillTitle}
+          </span>
+          <span className="text-muted-foreground text-sm ">
+            {dirType.toUpperCase()}
+          </span>
           <Button
-            variant="ghost"
-            className="top-4 bg-transparent text-muted-foreground left-4 self-start"
+            size={'sm'}
+            variant="secondary"
+            className="top-4 bg-transparent mt-4 z-50 text-muted-foreground left-4 self-start"
           >
             Add Banner
           </Button>

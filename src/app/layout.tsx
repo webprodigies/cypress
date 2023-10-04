@@ -4,7 +4,8 @@ import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { twMerge } from 'tailwind-merge';
 import { SocketProvider } from '@/lib/providers/socket-provider';
-import { FolderProvider } from '@/lib/providers/file-provider';
+import { FilesProvider } from '@/lib/providers/file-provider';
+import { FolderProvider } from '@/lib/providers/folder-provider';
 
 const inter = DM_Sans({ subsets: ['latin'] });
 
@@ -26,9 +27,11 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
         >
-          <FolderProvider>
-            <SocketProvider>{children}</SocketProvider>
-          </FolderProvider>
+          <FilesProvider>
+            <FolderProvider>
+              <SocketProvider>{children}</SocketProvider>
+            </FolderProvider>
+          </FilesProvider>
         </ThemeProvider>
       </body>
     </html>

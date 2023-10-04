@@ -11,47 +11,47 @@ import { File } from '../supabase/supabase.types';
 import { usePathname } from 'next/navigation';
 import { getFiles } from '../supabase/queries';
 
-export type FoldersContextType = {
-  folders: { folderId: string; files: File[] }[] | [];
-  setFolders: React.Dispatch<
+export type FilesContextType = {
+  files: { folderId: string; files: File[] }[] | [];
+  setFiles: React.Dispatch<
     React.SetStateAction<{ folderId: string; files: File[] }[] | []>
   >;
 };
-const FoldersContext = createContext<FoldersContextType>({
-  folders: [],
-  setFolders: () => {},
+const FilesContext = createContext<FilesContextType>({
+  files: [],
+  setFiles: () => {},
 });
 
-export const useFolders = () => {
-  return useContext(FoldersContext);
+export const useFiles = () => {
+  return useContext(FilesContext);
 };
 
-export const FolderProvider = ({ children }: { children: ReactNode }) => {
-  const [folders, setFolders] = useState<
+export const FilesProvider = ({ children }: { children: ReactNode }) => {
+  const [files, setFiles] = useState<
     { folderId: string; files: File[] }[] | []
   >([]);
 
   const pathname = usePathname();
   const folderId = useMemo(() => {
     const folderSegments = pathname?.split('/').filter(Boolean);
-    if (folderSegments?.length === 3) {
+    if (folderSegments?.length === 3 || folderSegments?.length === 4) {
       return folderSegments[2];
     }
   }, [pathname]);
 
   useEffect(() => {
-    if (folders.find((folder) => folder.folderId === folderId) || !folderId)
+    if (files.find((folder) => folder.folderId === folderId) || !folderId)
       return;
     const fetchFiles = async () => {
       const response = await getFiles(folderId);
-      setFolders([...folders, { folderId, files: response }]);
+      setFiles([...files, { folderId, files: response }]);
     };
     fetchFiles();
   }, [folderId]);
 
   return (
-    <FoldersContext.Provider value={{ folders, setFolders }}>
+    <FilesContext.Provider value={{ files, setFiles }}>
       {children}
-    </FoldersContext.Provider>
+    </FilesContext.Provider>
   );
 };
