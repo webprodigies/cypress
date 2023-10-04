@@ -10,19 +10,22 @@ import { twMerge } from 'tailwind-merge';
 import CustomDialogTrigger from '../customDialogTrigger';
 import TooltipComponent from '../tooltip';
 import { MoreHorizontalIcon, PlusIcon } from 'lucide-react';
-import WorkspaceEditor from '../workspaceEditor';
+import fileCreator from '../fileCreator';
 import IconSelector from '../iconSelector';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { ChangeEventHandler, useEffect, useState } from 'react';
 import { getFiles } from '@/lib/supabase/queries';
 import { File } from '@/lib/supabase/supabase.types';
-import CypressHomeIcon from '../icons/cypressHomeIcon';
+import EmojiPicker from '../emoji-picker';
+import FileCreator from '../fileCreator';
+import FileEditor from '../file-Editor';
+import { useFolders } from '@/lib/providers/file-provider';
 
 interface DropdownProps {
   title: string;
   id: string;
   listType: 'folder' | 'file' | 'native';
-  iconId?: (typeof ICON_NAMES)[number];
+  iconId: string;
   children?: React.ReactNode;
   onClick?: (id: string, listType: 'folder' | 'file') => void;
   test?: any;
@@ -44,31 +47,104 @@ export function Dropdown({
   customIcon,
   ...props
 }: DropdownProps) {
-  const [files, setFiles] = useState<File[]>([]);
+  const { folders, setFolders } = useFolders();
+  const [isEditing, setIsEditing] = useState(false);
+  const [folderTitle, setFolderTitle] = useState(title);
+  const [fileTitle, setFileTitle] = useState(title);
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    const fetchFolders = async () => {
-      if (listType === 'folder') {
-        const response = await getFiles(id);
-        setFiles(response);
-      }
-    };
-    fetchFolders();
-  }, []);
+  const navigatePage = (accordianId: string, type: string) => {
+    if (!pathname) return;
+    const [workspaceId, folderId, fileId] = pathname
+      .split('/dashboard/')[1]
+      .split('/');
 
-  const Icon = ICON_NAME_MAPPING[iconId || 'folder'];
-  const createNew = listType === 'folder' ? 'folder' : 'file';
+    if (type === 'folder') {
+      router.push(`/dashboard/${workspaceId}/${accordianId}`);
+    }
+    if (type === 'file') {
+      const fileFolderRelation = accordianId.split('folder');
+      router.push(
+        `/dashboard/${workspaceId}/${fileFolderRelation[0]}/${fileFolderRelation[1]}`
+      );
+    }
+  };
+
+  const addNewFile = (newFile: {
+    id: string;
+    title: string;
+    iconId: string;
+  }) => {
+    setFolders((currentFolder) => {
+      return currentFolder.map((folder) => {
+        if (folder.folderId === id) {
+          return {
+            folderId: id,
+            files: [
+              ...folder.files,
+              {
+                folderId: id,
+                data: null,
+                createdAt: '',
+                ...newFile,
+              },
+            ],
+          };
+        }
+        return folder;
+      });
+    });
+  };
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    if (!fileTitle) setFileTitle(title);
+    setIsEditing(false);
+  };
+
+  const fileTitleChange = (e: any) => {
+    setFileTitle(e.target.value);
+    const fileAndFolderId = id.split('folder');
+    if (fileAndFolderId.length === 2 && fileAndFolderId[1]) {
+      setFolders((currentFolder) =>
+        currentFolder.map((folder) => {
+          if (folder.folderId === fileAndFolderId[0]) {
+            const updatedFiles = folder.files.map((file) => {
+              if (file.id === fileAndFolderId[1]) {
+                return {
+                  ...file,
+                  title: fileTitle,
+                };
+              }
+              return file;
+            });
+
+            return {
+              ...folder,
+              files: updatedFiles,
+            };
+          }
+          return folder;
+        })
+      );
+    }
+  };
+
+  const folderTitleChange = (e: any) => {
+    if (id.split('folder').length === 1) {
+      setFolderTitle(e.target.value);
+    }
+  };
+
   const isFolder = listType === 'folder';
   const groupIdentifies = clsx(
     'dark:text-white whitespace-nowrap flex justify-between items-center w-full relative',
     { 'group/folder': isFolder, 'group/file': !isFolder }
   );
-  const description =
-    listType === 'folder'
-      ? 'Folders allow you group related topics together.'
-      : 'File are a powerful way to express your thoughts.';
 
   const listStyles = clsx('relative ', {
     'border-none text-md': isFolder,
@@ -84,22 +160,6 @@ export function Dropdown({
       }
     )
   );
-
-  const navigatePage = (accordianId: string, type: string) => {
-    const [workspaceId, folderId, fileId] = pathname
-      .split('/dashboard/')[1]
-      .split('/');
-
-    if (type === 'folder') {
-      router.push(`/dashboard/${workspaceId}/${accordianId}`);
-    }
-    if (type === 'file') {
-      const fileFolderRelation = accordianId.split('folder');
-      router.push(
-        `/dashboard/${workspaceId}/${fileFolderRelation[0]}/${fileFolderRelation[1]}`
-      );
-    }
-  };
 
   return (
     <AccordionItem
@@ -118,39 +178,69 @@ export function Dropdown({
       >
         <div className={groupIdentifies}>
           <div className="flex gap-4 items-center justify-center overflow-hidden ">
-            <CustomDialogTrigger content={<IconSelector />}>
-              {listType === 'native' ? (
-                <div className="w-[14px] h-[16px] flex items-center ">
-                  {customIcon}
-                </div>
-              ) : (
-                <div className="w-[14px] h-[16px] ">
-                  <Icon
-                    name={iconId}
-                    size={18}
-                  />
-                </div>
-              )}
-            </CustomDialogTrigger>
-            <span className="overflow-ellipsis text-Neutrals-7 overflow-hidden w-[140px] cursor-pointer">
-              {title}
-            </span>
+            {listType === 'native' ? (
+              <div className="w-[14px]  flex items-center ">{customIcon}</div>
+            ) : (
+              <div className="relative">
+                <EmojiPicker
+                  dropdownId={id}
+                  type={listType}
+                >
+                  {iconId}
+                </EmojiPicker>
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={listType === 'folder' ? folderTitle : fileTitle}
+              className={`outline-none overflow-hidden w-[140px] text-Neutrals-7 ${
+                isEditing
+                  ? 'bg-muted cursor-text'
+                  : 'bg-transparent cursor-pointer '
+              }`}
+              readOnly={!isEditing}
+              onDoubleClick={handleDoubleClick}
+              onBlur={handleBlur}
+              onChange={
+                listType === 'folder' ? folderTitleChange : fileTitleChange
+              }
+            />
           </div>
 
           {listType === 'folder' && (
             <div className={commandStyles}>
-              <TooltipComponent message="Edit">
-                <MoreHorizontalIcon
-                  size={15}
-                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                />
+              <TooltipComponent message="Edit Folder">
+                <CustomDialogTrigger
+                  header="Edit Folder details"
+                  description="Change the folder name or icon to confirm edits."
+                  content={
+                    <FileEditor
+                      parentId={id}
+                      defaultIcon={iconId}
+                      defaultTitle={title}
+                      type={listType}
+                    />
+                  }
+                >
+                  <MoreHorizontalIcon
+                    size={15}
+                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                  />
+                </CustomDialogTrigger>
               </TooltipComponent>
 
-              <TooltipComponent message="Add Folder">
+              <TooltipComponent message="Add File">
                 <CustomDialogTrigger
-                  header={`Create a new ${createNew}`}
-                  description={description}
-                  content={<WorkspaceEditor type={createNew} />}
+                  header="Create a new file"
+                  description="Files are a powerful way to express your thoughts."
+                  content={
+                    <FileCreator
+                      getNewValue={addNewFile}
+                      parent={id}
+                      type="file"
+                    />
+                  }
                 >
                   <PlusIcon
                     size={15}
@@ -164,9 +254,16 @@ export function Dropdown({
             <div className="h-full hidden group-hover/file:block rounded-sm absolute right-0 items-center gap-2  justify-center">
               <TooltipComponent message="Edit">
                 <CustomDialogTrigger
-                  header={`Create a new ${createNew}`}
-                  description={description}
-                  content={<WorkspaceEditor type={createNew} />}
+                  header="Edit file"
+                  description="Change the file name or icon to confirm edits."
+                  content={
+                    <FileEditor
+                      parentId={id}
+                      type="file"
+                      defaultIcon={iconId}
+                      defaultTitle={title}
+                    />
+                  }
                 >
                   <MoreHorizontalIcon
                     size={15}
@@ -179,18 +276,20 @@ export function Dropdown({
         </div>
       </AccordionTrigger>
       <AccordionContent className="">
-        {files.map((file, index) => {
-          const customfileId = `${id}folder${file.id}`;
-          return (
-            <Dropdown
-              key={file.id}
-              title={file.title}
-              listType="file"
-              id={customfileId}
-              iconId={file.iconId}
-            />
-          );
-        })}
+        {folders
+          .find((folder) => folder.folderId === id)
+          ?.files.map((file, index) => {
+            const customfileId = `${id}folder${file.id}`;
+            return (
+              <Dropdown
+                key={file.id}
+                title={file.title}
+                listType="file"
+                id={customfileId}
+                iconId={file.iconId}
+              />
+            );
+          })}
       </AccordionContent>
     </AccordionItem>
   );

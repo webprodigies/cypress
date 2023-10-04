@@ -52,24 +52,24 @@ export interface Database {
       };
       files: {
         Row: {
-          blocks: Json | null;
           created_at: string;
+          data: string | null;
           folder_id: string;
           icon_id: string;
           id: string;
           title: string;
         };
         Insert: {
-          blocks?: Json | null;
           created_at?: string;
+          data?: string | null;
           folder_id: string;
           icon_id: string;
           id?: string;
           title: string;
         };
         Update: {
-          blocks?: Json | null;
           created_at?: string;
+          data?: string | null;
           folder_id?: string;
           icon_id?: string;
           id?: string;
@@ -86,24 +86,24 @@ export interface Database {
       };
       folders: {
         Row: {
-          blocks: string | null;
           created_at: string;
+          data: string | null;
           folder_id: string;
           icon_id: string;
           title: string;
           workspace_id: string;
         };
         Insert: {
-          blocks?: string | null;
           created_at?: string;
+          data?: string | null;
           folder_id?: string;
           icon_id: string;
           title: string;
           workspace_id: string;
         };
         Update: {
-          blocks?: string | null;
           created_at?: string;
+          data?: string | null;
           folder_id?: string;
           icon_id?: string;
           title?: string;
@@ -147,24 +147,24 @@ export interface Database {
       };
       workspaces: {
         Row: {
-          blocks: Json | null;
           created_at: string | null;
+          data: string | null;
           icon_id: string;
           id: string;
           title: string;
           workspace_owner: string;
         };
         Insert: {
-          blocks?: Json | null;
           created_at?: string | null;
+          data?: string | null;
           icon_id: string;
           id?: string;
           title: string;
           workspace_owner: string;
         };
         Update: {
-          blocks?: Json | null;
           created_at?: string | null;
+          data?: string | null;
           icon_id?: string;
           id?: string;
           title?: string;
@@ -188,7 +188,9 @@ export interface Database {
     };
     Enums: {
       aal_level: 'aal1' | 'aal2' | 'aal3';
+      action: 'INSERT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'ERROR';
       code_challenge_method: 's256' | 'plain';
+      equality_op: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'in';
       factor_status: 'unverified' | 'verified';
       factor_type: 'totp' | 'webauthn';
       key_status: 'default' | 'valid' | 'invalid' | 'expired';
@@ -223,26 +225,10 @@ export type CollaboratedWorkspace = {
 };
 
 export type workspace = InferSelectModel<typeof workspaces>;
-export type fakeType = Omit<InferSelectModel<typeof workspaces>, 'blocks'> & {
-  blocks: { blocks: [] } | OutputBlockData[];
-};
 export type testType = workspace & { iconId: 'perrin' | 'something' };
 export type profiles = InferSelectModel<typeof profiles>;
-export type Folder = {
-  [T in keyof InferSelectModel<typeof folders>]: T extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : InferSelectModel<typeof folders>[T];
-};
-export type File = {
-  [T in keyof InferSelectModel<typeof files>]: T extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : InferSelectModel<typeof files>[T];
-};
-// export type File = {
-//   [T in keyof InferSelectModel<typeof >]: T extends 'iconId'
-//     ? (typeof ICON_NAMES)[number]
-//     : InferSelectModel<typeof folders>[T];
-// };
+export type Folder = InferSelectModel<typeof folders>;
+export type File = InferSelectModel<typeof files>;
 
 export type WorkspacesWithIconIds = {
   [K in keyof workspace]: K extends 'iconId'

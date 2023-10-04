@@ -8,6 +8,20 @@
       "when": 1695666607983,
       "tag": "0000_outstanding_oracle",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1696259153148,
+      "tag": "0001_fine_lilith",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1696360589312,
+      "tag": "0002_mushy_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

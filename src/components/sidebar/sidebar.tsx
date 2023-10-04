@@ -9,11 +9,10 @@ import TempDropdown from './tempDropdown';
 import NativeNavigation from './nativeNavigation';
 import TooltipComponent from '../tooltip';
 import CustomDialogTrigger from '../customDialogTrigger';
-import WorkspaceEditor from '../workspaceEditor';
 import { PlusIcon, Search } from 'lucide-react';
 import PlanUsage from './planUsage';
-import { Input } from '../ui/input';
 import UserCard from './userCard';
+import FileCreator from '../fileCreator';
 
 interface SidebarProps {
   params: { workspaceId: string };
@@ -37,9 +36,14 @@ const Sidebar: React.FC<SidebarProps> = async ({ params }) => {
             <span className="text-Neutrals-8 font-bold text-xs">FOLDERS</span>
             <TooltipComponent message="Create Folder">
               <CustomDialogTrigger
-                header="Create a new workspace"
-                description="Workspaces allow you to organize pages and folders that can be private or shared with collaborators"
-                content={<WorkspaceEditor type="folder" />}
+                header="Create a new folder"
+                description="Folders allow you to group files together."
+                content={
+                  <FileCreator
+                    parent={params.workspaceId}
+                    type="folder"
+                  />
+                }
               >
                 <PlusIcon
                   size={16}

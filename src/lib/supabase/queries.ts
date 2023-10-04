@@ -17,7 +17,7 @@ import {
   WorkspacesWithIconIds,
 } from './supabase.types';
 import { randomUUID } from 'crypto';
-import { OutputData } from '@editorjs/editorjs';
+import { revalidatePath } from 'next/cache';
 
 export const getPrivateWorkspaces = async (userId: string | null) => {
   if (!userId) {
@@ -106,10 +106,35 @@ export const getFolders = async (workspaceId: string) => {
     const results = (await db
       .select()
       .from(folders)
+      .orderBy(folders.createdAt)
       .where(eq(folders.workspaceId, workspaceId))) as Folder[] | [];
     return results;
   }
   return [];
+};
+
+export const createFolder = async (
+  workspaceId: string,
+  title: string,
+  icon?: string
+) => {
+  if (!title || !workspaceId) return;
+  const results = await db
+    .insert(folders)
+    .values({ title, workspaceId, iconId: icon ? icon : '📁' });
+  revalidatePath('/');
+};
+
+export const createFile = async (
+  folderId: string,
+  title: string,
+  fileId: string,
+  iconId?: string
+) => {
+  if (!title || !folderId) return;
+  const results = await db
+    .insert(files)
+    .values({ folderId, title, iconId: iconId ? iconId : '📜', id: fileId });
 };
 
 export const getFiles = async (folderId: string) => {
@@ -124,19 +149,54 @@ export const getFiles = async (folderId: string) => {
   return [];
 };
 
-///Listen to stuff from the folders table.
-// const [optimisticPrivateWorkspaces, optimisticSetPrivateWorkspaces] =
-//   useOptimistic<PrivateWorkspaces[], PrivateWorkspaces>(
-//     workspaceCategory as PrivateWorkspaces[],
-//     (state: PrivateWorkspaces[], newWorkspaceItem: PrivateWorkspaces) => [
-//       newWorkspaceItem,
-//       ...state,
-//     ]
-//   );
-
-export const updateBlocks = async (workspaceId: string, blocks: any) => {
+export const updateWorkspaceFile = async (
+  workspaceId: string,
+  data: string
+) => {
   const response = await db
     .update(workspaces)
-    .set({ blocks: blocks })
+    .set({ data })
     .where(eq(workspaces.id, workspaceId));
+};
+
+export const updateEmojiWorkspace = async (
+  workspaceId: string,
+  emoji: string
+) => {
+  try {
+    const response = await db
+      .update(workspaces)
+      .set({ iconId: emoji ? emoji : '📁' })
+      .where(eq(workspaces.id, workspaceId));
+  } catch (er) {
+    revalidatePath('/');
+  }
+};
+
+export const updateEmojiFolder = async (folderId: string, emoji: string) => {
+  const response = await db
+    .update(folders)
+    .set({ iconId: emoji ? emoji : '📁' })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateEmojiFile = async (fileId: string, emoji: string) => {
+  const response = await db
+    .update(files)
+    .set({ iconId: emoji ? emoji : '📋' })
+    .where(eq(files.folderId, fileId));
+};
+
+export const updateTitleFolder = async (folderId: string, title: string) => {
+  const response = await db
+    .update(folders)
+    .set({ title })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateTitleFile = async (fileId: string, title: string) => {
+  const response = await db
+    .update(files)
+    .set({ title })
+    .where(eq(files.id, fileId));
 };

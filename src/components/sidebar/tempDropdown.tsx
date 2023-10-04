@@ -1,5 +1,5 @@
 import { Folder } from '@/lib/supabase/supabase.types';
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import ClientAccordian from './clientAccordian';
 import { Dropdown } from './Dropdown';
 
@@ -7,10 +7,10 @@ interface TempDropdownProps {
   workspaceFolders: Folder[];
 }
 
-const TempDropdown: FC<TempDropdownProps> = async ({ workspaceFolders }) => {
+const TempDropdown: FC<TempDropdownProps> = ({ workspaceFolders }) => {
   return (
-    <ClientAccordian className="">
-      {workspaceFolders.map((folder, index) => (
+    <ClientAccordian className='pb-20'>
+      {workspaceFolders.map((folder) => (
         <Dropdown
           key={folder.folderId}
           title={folder.title}

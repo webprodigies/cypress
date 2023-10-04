@@ -13,10 +13,9 @@ const ClientAccordian: FC<ClientAccordianProps> = ({ children, className }) => {
   // router.refresh();
   return (
     <Accordion
-      defaultValue={pathname.split('/dashboard/')[1].split('/')}
+      defaultValue={pathname?.split('/dashboard/')[1].split('/')}
       className={className}
       type="multiple"
-      //   defaultValue={[folderId, fileId]}
     >
       {children}
     </Accordion>
