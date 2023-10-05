@@ -35,15 +35,6 @@ const EmojiPicker: FC<EmojiPickerProps> = ({
 
   const onClick = async (selectedEmoji: any) => {
     if (getValue) getValue(selectedEmoji.emoji);
-    if (type === 'file' && dropdownId) {
-      await updateEmojiFile(dropdownId, selectedEmoji.emoji);
-      router.refresh();
-    }
-    if (type === 'folder' && dropdownId) {
-      console.log('INVOKED FOLDER', selectedEmoji.emoji);
-      await updateEmojiFolder(dropdownId, selectedEmoji.emoji);
-      router.refresh();
-    }
   };
   return (
     <div className="flex items-center">

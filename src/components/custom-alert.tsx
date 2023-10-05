@@ -30,7 +30,13 @@ const CustomAlert = ({
 }) => {
   return (
     <AlertDialog>
-      <AlertDialogTrigger>{children}</AlertDialogTrigger>
+      <AlertDialogTrigger
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        {children}
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

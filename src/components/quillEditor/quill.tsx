@@ -62,9 +62,9 @@ const QuillEditor: FC<QuillEditorProps> = ({
   title = undefined,
 }) => {
   const { folders } = useFolders();
+  const { socket } = useSocket();
   const { files } = useFiles();
   const [quill, setQuill] = useState<any>(null);
-  const { socket } = useSocket();
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [saving, setSaving] = useState(false);
   const [optimisticIcon, setOptimisticIcon] = useOptimistic(
@@ -84,18 +84,21 @@ const QuillEditor: FC<QuillEditorProps> = ({
         theme: 'snow',
         modules: { toolbar: TOOLBAR_OPTIONS },
       });
-
       setQuill(q);
     }
   }, []);
 
   const iconOnChange = async (icon: string) => {
+    //Only for workspace we will use the optimistic hook to show how its done
     if (dirType === 'workspace' && fileId) {
       setOptimisticIcon(icon);
       await updateEmojiWorkspace(fileId, icon);
-    } else if (dirType === 'folder' && fileId)
+    } else if (dirType === 'folder' && fileId) {
+      setOptimisticIcon(icon);
       await updateEmojiFolder(fileId, icon);
-    else if (dirType === 'file' && fileId) await updateEmojiFile(fileId, icon);
+    } else if (dirType === 'file' && fileId) {
+      await updateEmojiFile(fileId, icon);
+    }
   };
 
   //GetTitle from folders and files hook

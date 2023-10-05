@@ -11,12 +11,19 @@ import TooltipComponent from '../tooltip';
 import { Delete, MoreHorizontalIcon, PlusIcon, Trash } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { v4 as uuid } from 'uuid';
 
 import EmojiPicker from '../emoji-picker';
 import { useFiles } from '@/lib/providers/file-provider';
 import dynamic from 'next/dynamic';
 import { useFolders } from '@/lib/providers/folder-provider';
-import { updateTitleFile, updateTitleFolder } from '@/lib/supabase/queries';
+import {
+  createFile,
+  updateEmojiFile,
+  updateEmojiFolder,
+  updateTitleFile,
+  updateTitleFolder,
+} from '@/lib/supabase/queries';
 
 interface DropdownProps {
   title: string;
@@ -68,31 +75,29 @@ export function Dropdown({
     }
   };
 
-  const addNewFile = (newFile: {
-    id: string;
-    title: string;
-    iconId: string;
-  }) => {
+  const addNewFile = async () => {
+    const newFile = {
+      folderId: id,
+      data: null,
+      createdAt: new Date().toISOString(),
+      inTrash: null,
+      title: 'Untitled',
+      iconId: '📄',
+      id: uuid(),
+    };
+
     setFiles((currentFolder) => {
       return currentFolder.map((folder) => {
         if (folder.folderId === id) {
           return {
             folderId: id,
-            files: [
-              ...folder.files,
-              {
-                folderId: id,
-                data: null,
-                createdAt: '',
-                inTrash: '',
-                ...newFile,
-              },
-            ],
+            files: [...folder.files, newFile],
           };
         }
         return folder;
       });
     });
+    await createFile(newFile);
   };
 
   const handleDoubleClick = () => {
@@ -100,7 +105,7 @@ export function Dropdown({
   };
 
   const handleBlur = async () => {
-   //If it is a folder
+    //If it is a folder
     setIsEditing(false);
     const folderId = id.split('folder');
     if (folderId.length === 1) {
@@ -166,6 +171,41 @@ export function Dropdown({
     }
   };
 
+  const changeEmoji = async (selectedEmoji: string) => {
+    const pathId = id.split('folder');
+    //folder
+    if (listType === 'folder' && pathId.length === 1) {
+      await updateEmojiFolder(pathId[0], selectedEmoji);
+      router.refresh();
+    }
+    //file
+    if (listType === 'file' && pathId.length === 2) {
+      setFiles((currentFolders) =>
+        currentFolders.map((folder) => {
+          if (folder.folderId === pathId[0]) {
+            const updatedFiles = folder.files.map((file) => {
+              if (file.id === pathId[1]) {
+                return {
+                  ...file,
+                  iconId: selectedEmoji,
+                };
+              }
+              return file;
+            });
+
+            return {
+              ...folder,
+              files: updatedFiles,
+            };
+          }
+          return folder;
+        })
+      );
+      await updateEmojiFile(pathId[1], selectedEmoji);
+    }
+  };
+
+  //WIP
   const deleteFolderHandler = () => {};
 
   const isFolder = listType === 'folder';
@@ -213,6 +253,7 @@ export function Dropdown({
                 <EmojiPicker
                   dropdownId={id}
                   type={listType}
+                  getValue={changeEmoji}
                 >
                   {iconId}
                 </EmojiPicker>
@@ -242,19 +283,20 @@ export function Dropdown({
                 <CustomAlert
                   continueHandler={deleteFolderHandler}
                   title="Are your sure?"
-                  description="This will delete all data related to this folder including files."
+                  description="This will send all data related to this folder including files to the trash. You can restore it from there if needed."
                   continueTitle="Delete"
                   cancelTitle="Cancel"
                 >
                   <Trash
                     size={15}
                     className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  ></Trash>
+                  />
                 </CustomAlert>
               </TooltipComponent>
 
               <TooltipComponent message="Add File">
                 <PlusIcon
+                  onClick={addNewFile}
                   size={15}
                   className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
                 />
@@ -264,10 +306,18 @@ export function Dropdown({
           {listType === 'file' && !isEditing && (
             <div className="h-full hidden group-hover/file:block rounded-sm absolute right-0 items-center gap-2  justify-center">
               <TooltipComponent message="Delete File">
-                <Trash
-                  size={15}
-                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                ></Trash>
+                <CustomAlert
+                  continueHandler={deleteFolderHandler}
+                  title="Are your sure?"
+                  description="This will send all data related to this file to the trash. You can restore it from there if needed."
+                  continueTitle="Delete"
+                  cancelTitle="Cancel"
+                >
+                  <Trash
+                    size={15}
+                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                  />
+                </CustomAlert>
               </TooltipComponent>
             </div>
           )}

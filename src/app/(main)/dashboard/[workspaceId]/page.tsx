@@ -14,7 +14,7 @@ const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
     .where(eq(workspaces.id, params.workspaceId))
     .limit(1)) as workspace[];
 
-  console.log(response);
+  console.log(response[0].createdAt);
 
   return (
     <div className="relative ">

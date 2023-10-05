@@ -116,7 +116,6 @@ export const getFolders = async (workspaceId: string) => {
   return [];
 };
 
-
 export const createFolder = async (
   workspaceId: string,
   title: string,
@@ -129,16 +128,8 @@ export const createFolder = async (
   revalidatePath('/');
 };
 
-export const createFile = async (
-  folderId: string,
-  title: string,
-  fileId: string,
-  iconId?: string
-) => {
-  if (!title || !folderId) return;
-  const results = await db
-    .insert(files)
-    .values({ folderId, title, iconId: iconId ? iconId : '📜', id: fileId });
+export const createFile = async (file: File) => {
+  const results = await db.insert(files).values(file);
 };
 
 export const getFiles = async (folderId: string) => {
@@ -202,10 +193,11 @@ export const updateEmojiFolder = async (folderId: string, emoji: string) => {
 };
 
 export const updateEmojiFile = async (fileId: string, emoji: string) => {
+  console.log(fileId, emoji);
   const response = await db
     .update(files)
     .set({ iconId: emoji ? emoji : '📋' })
-    .where(eq(files.folderId, fileId));
+    .where(eq(files.id, fileId));
 };
 
 export const updateTitleFolder = async (folderId: string, title: string) => {
@@ -237,6 +229,7 @@ export const sendFolderToTrash = async (folderId: string) => {
       })
       .where(eq(files.folderId, folderId));
   });
+  revalidatePath('/');
 };
 
 //rgb(235, 87, 87)
