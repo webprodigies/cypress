@@ -1,5 +1,6 @@
 'use server';
-import { and, eq, ne, notExists, or } from 'drizzle-orm';
+
+import { and, eq, isNull, ne, notExists, or } from 'drizzle-orm';
 import {
   collaborators,
   files,
@@ -8,15 +9,9 @@ import {
   workspaces,
 } from '../../../migrations/schema';
 import db from './db';
-import {
-  CollaboratedWorkspaces,
-  File,
-  Folder,
-  PrivateWorkspaces,
-  SharedWorkspaces,
-  WorkspacesWithIconIds,
-} from './supabase.types';
+import { File, Folder, workspace } from './supabase.types';
 import { randomUUID } from 'crypto';
+import { revalidatePath } from 'next/cache';
 
 export const getPrivateWorkspaces = async (userId: string | null) => {
   if (!userId) {
@@ -29,6 +24,8 @@ export const getPrivateWorkspaces = async (userId: string | null) => {
       workspaceOwner: workspaces.workspaceOwner,
       title: workspaces.title,
       iconId: workspaces.iconId,
+      data: workspaces.data,
+      inTrash: workspaces.inTrash,
     })
     .from(workspaces)
     .where(
@@ -41,9 +38,8 @@ export const getPrivateWorkspaces = async (userId: string | null) => {
         ),
         eq(workspaces.workspaceOwner, userId)
       )
-    )) as PrivateWorkspaces;
+    )) as [workspace];
 
-  // console.log('PRIVATE WORKSPACES', privateWorkspaces);
   return privateWorkspaces;
 };
 
@@ -74,12 +70,14 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
       workspaceOwner: workspaces.workspaceOwner,
       title: workspaces.title,
       iconId: workspaces.iconId,
+      data: workspaces.data,
+      inTrash: workspaces.inTrash,
     })
     .from(profiles)
     .innerJoin(collaborators, eq(profiles.id, collaborators.userId))
     .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
-    .where(eq(profiles.id, userId))) as CollaboratedWorkspaces;
-  // console.log('Collaborating Workspaces', collaboratedWorkspaces);
+    .where(eq(profiles.id, userId))) as [workspace];
+
   return collaboratedWorkspaces;
 };
 
@@ -92,11 +90,12 @@ export const getSharedWorkspaces = async (userId: string) => {
       workspaceOwner: workspaces.workspaceOwner,
       title: workspaces.title,
       iconId: workspaces.iconId,
+      data: workspaces.data,
+      inTrash: workspaces.inTrash,
     })
     .from(workspaces)
     .innerJoin(collaborators, eq(workspaces.id, collaborators.workspaceId))
-    .where(eq(workspaces.workspaceOwner, userId))) as SharedWorkspaces;
-  // console.log('Shared Workspaces', sharedWorkspaces);
+    .where(eq(workspaces.workspaceOwner, userId))) as [workspace];
   return sharedWorkspaces;
 };
 
@@ -105,10 +104,19 @@ export const getFolders = async (workspaceId: string) => {
     const results = (await db
       .select()
       .from(folders)
-      .where(eq(folders.workspaceId, workspaceId))) as Folder[] | [];
+      .orderBy(folders.createdAt)
+      .where(and(eq(folders.workspaceId, workspaceId)))) as Folder[] | [];
     return results;
   }
   return [];
+};
+
+export const createFolder = async (folder: Folder) => {
+  const results = await db.insert(folders).values(folder);
+};
+
+export const createFile = async (file: File) => {
+  const results = await db.insert(files).values(file);
 };
 
 export const getFiles = async (folderId: string) => {
@@ -117,18 +125,192 @@ export const getFiles = async (folderId: string) => {
     const results = (await db
       .select()
       .from(files)
-      .where(eq(files.folderId, folderId))) as File[];
+      .orderBy(files.createdAt)
+      .where(and(eq(files.folderId, folderId)))) as File[];
     return results;
   }
   return [];
 };
 
-///Listen to stuff from the folders table.
-// const [optimisticPrivateWorkspaces, optimisticSetPrivateWorkspaces] =
-//   useOptimistic<PrivateWorkspaces[], PrivateWorkspaces>(
-//     workspaceCategory as PrivateWorkspaces[],
-//     (state: PrivateWorkspaces[], newWorkspaceItem: PrivateWorkspaces) => [
-//       newWorkspaceItem,
-//       ...state,
-//     ]
-//   );
+export const updateWorkspaceFile = async (
+  workspaceId: string,
+  data: string
+) => {
+  const response = await db
+    .update(workspaces)
+    .set({ data })
+    .where(eq(workspaces.id, workspaceId));
+};
+
+export const updateFolderFile = async (folderId: string, data: string) => {
+  const response = await db
+    .update(folders)
+    .set({ data })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateFileFile = async (fileId: string, data: string) => {
+  const response = await db
+    .update(files)
+    .set({ data })
+    .where(eq(files.id, fileId));
+};
+
+export const updateEmojiWorkspace = async (
+  workspaceId: string,
+  emoji: string
+) => {
+  try {
+    const response = await db
+      .update(workspaces)
+      .set({ iconId: emoji ? emoji : '📁' })
+      .where(eq(workspaces.id, workspaceId));
+  } catch (er) {
+    revalidatePath('/');
+  }
+};
+
+export const updateEmojiFolder = async (folderId: string, emoji: string) => {
+  const response = await db
+    .update(folders)
+    .set({ iconId: emoji ? emoji : '📁' })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateEmojiFile = async (fileId: string, emoji: string) => {
+  console.log(fileId, emoji);
+  const response = await db
+    .update(files)
+    .set({ iconId: emoji ? emoji : '📋' })
+    .where(eq(files.id, fileId));
+};
+
+export const updateTitleFolder = async (folderId: string, title: string) => {
+  const response = await db
+    .update(folders)
+    .set({ title })
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateTitleFile = async (fileId: string, title: string) => {
+  const response = await db
+    .update(files)
+    .set({ title })
+    .where(eq(files.id, fileId));
+};
+
+export const sendFolderToTrash = async (folderId: string, message: string) => {
+  const response = await db
+    .update(folders)
+    .set({ inTrash: message })
+    .where(eq(folders.folderId, folderId));
+
+  const resFiles = await getFiles(folderId);
+  resFiles.map(async (file) => {
+    await db
+      .update(files)
+      .set({
+        inTrash: message,
+      })
+      .where(eq(files.folderId, folderId));
+  });
+};
+export const restoreFolder = async (folderId: string) => {
+  const response = await db
+    .update(folders)
+    .set({ inTrash: '' })
+    .where(eq(folders.folderId, folderId));
+  const resFiles = await getFiles(folderId);
+  resFiles.map(async (file) => {
+    await db
+      .update(files)
+      .set({ inTrash: '' })
+      .where(eq(files.folderId, folderId));
+  });
+};
+
+export const sendFileToTrash = async (fileId: string, message: string) => {
+  const response = await db
+    .update(files)
+    .set({ inTrash: message })
+    .where(eq(files.id, fileId));
+};
+
+export const restoreFile = async (fileId: string) => {
+  const response = await db
+    .update(files)
+    .set({ inTrash: '' })
+    .where(eq(files.id, fileId));
+};
+
+export const getWorkspaceDetails = async (workspaceId: string) => {
+  const response = (await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1)) as workspace[];
+  return response;
+};
+
+export const getFolderDetails = async (folderId: string) => {
+  const response = (await db
+    .select()
+    .from(folders)
+    .where(eq(folders.folderId, folderId))
+    .limit(1)) as Folder[];
+  return response;
+};
+
+export const getFileDetails = async (fileId: string) => {
+  const response = (await db
+    .select()
+    .from(files)
+    .where(eq(files.id, fileId))
+    .limit(1)) as File[];
+  return response;
+};
+
+export const deleteFile = async (fileId: string) => {
+  if (!fileId) return;
+  await db.delete(files).where(eq(files.id, fileId));
+};
+
+export const deleteFolder = async (folderId: string) => {
+  if (!folderId) return;
+  await db.delete(folders).where(eq(folders.folderId, folderId));
+};
+
+export const deleteWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) return;
+  await db.delete(workspaces).where(eq(files.id, workspaceId));
+};
+
+export const updateFolder = async (
+  updatedFolder: Partial<Folder>,
+  folderId: string
+) => {
+  if (!folderId) return;
+  await db
+    .update(folders)
+    .set(updatedFolder)
+    .where(eq(folders.folderId, folderId));
+};
+
+export const updateFile = async (
+  updatedFile: Partial<File>,
+  fileId: string
+) => {
+  if (!fileId) return;
+  await db.update(files).set(updatedFile).where(eq(files.id, fileId));
+};
+
+export const updateWorkspace = async (
+  updatedWorkspace: Partial<workspace>,
+  workspaceId: string
+) => {
+  if (!workspaceId) return;
+  await db
+    .update(workspaces)
+    .set(updatedWorkspace)
+    .where(eq(workspaces.id, workspaceId));
+};

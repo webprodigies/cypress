@@ -1,11 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { AuthUser } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Lock, SearchIcon, Share } from 'lucide-react';
 
-import { createPrivateWorkspace } from '@/lib/supabase/queries';
+import {
+  createFolder,
+  createPrivateWorkspace,
+  updateEmojiFolder,
+  updateTitleFile,
+  updateTitleFolder,
+} from '@/lib/supabase/queries';
 import { AddWorkspaceCollaborator } from '@/lib/supabase/supabase.types';
 import { Input } from './ui/input';
 import {
@@ -19,25 +25,35 @@ import {
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
+import EmojiPicker from './emoji-picker';
 
-interface WorkspaceEditorProps {
-  type?: 'workspace' | 'folder' | 'file';
-  mode?: 'edit' | 'new';
+interface FileEditorProps {
+  type: 'workspace' | 'folder' | 'file';
+  defaultIcon: string;
+  defaultTitle: string;
+  privacySettings?: string;
+  parentId: string;
+  getNewValue?: (newValue: { title: string; fileId: string }) => void;
 }
 
-/*
-New & Edit
-type workspace, folder and file
-*/
-const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({ type, mode }) => {
+const FileEditor: React.FC<FileEditorProps> = ({
+  type,
+  defaultIcon,
+  defaultTitle,
+  privacySettings,
+  parentId,
+  getNewValue,
+}) => {
   const [permission, setPermissions] = useState<string>('private');
-  const [title, setTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>(defaultTitle);
+  const [selectedIcon, setSelectedIcon] = useState(defaultIcon);
   const [collaborators, setCollaborators] = useState<
     AddWorkspaceCollaborator[]
   >([]);
   const [user, setUser] = useState<AuthUser>();
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const addCollaborator = () => {
     setCollaborators([
@@ -46,18 +62,21 @@ const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({ type, mode }) => {
     ]);
   };
 
-  const createWorkspace = async () => {
-    if (user?.id)
-      if (permission === 'private') {
-        const res = await createPrivateWorkspace({
-          workspaceOwner: user.id,
-          title: title,
-          iconId: 'book',
-        });
-        console.log('RESPONSE');
+  const updateItem = async () => {
+    if (!parentId) return;
+    if (user?.id) {
+      if (type === 'workspace') {
+        if (permission === 'private') {
+          //Update the file
+        }
+      } else if (type === 'folder') {
+        router.refresh();
+      } else if (type === 'file') {
         router.refresh();
       }
+    }
   };
+
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -68,9 +87,44 @@ const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({ type, mode }) => {
     getUser();
   }, [supabase]);
 
+  const iconSelectHandler = async (icon: string) => {
+    setSelectedIcon(icon);
+    if (type === 'workspace') {
+    }
+    if (type === 'folder') {
+      await updateEmojiFolder(parentId, icon);
+      router.refresh();
+    }
+    if (type === 'file') {
+    }
+  };
+
+  useEffect(() => {
+    if (!title || title === defaultTitle) return;
+
+    const update = async () => {
+      if (type === 'folder') {
+        await updateTitleFolder(parentId, title);
+        router.refresh();
+      } else if (type === 'file') {
+        if (getNewValue) {
+          getNewValue({ title, fileId: parentId.split('folder')[1] });
+        }
+        await updateTitleFile(parentId.split('folder')[1], title);
+      }
+    };
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(update, 350);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [title]);
+
   return (
     <div className="flex gap-4 flex-col">
-      <div className="">
+      <div>
         <label
           htmlFor="name"
           className="text-sm text-muted-foreground"
@@ -78,9 +132,14 @@ const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({ type, mode }) => {
           Icon & Name
         </label>
         <div className="flex justify-center items-center gap-2">
-          <div className="h-8 w-8 bg-muted flex justify-center items-center p-2 rounded-lg">
-            T
-          </div>
+          <EmojiPicker
+            type={'native'}
+            getValue={iconSelectHandler}
+          >
+            <div className="h-8 w-8 bg-muted flex justify-center items-center p-2 rounded-lg">
+              {selectedIcon}
+            </div>
+          </EmojiPicker>
           <Input
             name="name"
             value={title}
@@ -204,18 +263,8 @@ const WorkspaceEditor: React.FC<WorkspaceEditorProps> = ({ type, mode }) => {
           </div>
         </div>
       )}
-      <Button
-        type="button"
-        disabled={
-          !title || (permission === 'shared' && collaborators.length === 0)
-        }
-        variant={'secondary'}
-        onClick={createWorkspace}
-      >
-        Create
-      </Button>
     </div>
   );
 };
 
-export default WorkspaceEditor;
+export default FileEditor;

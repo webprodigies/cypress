@@ -1,10 +1,28 @@
-import Editor from '@/components/editor/editor';
-import React from 'react';
+export const dynamic = 'force-dynamic';
 
-const Workspace = ({ params }: { params: { workspaceId: string } }) => {
+import db from '@/lib/supabase/db';
+import React from 'react';
+import { workspaces } from '../../../../../migrations/schema';
+import { eq } from 'drizzle-orm';
+import { workspace } from '@/lib/supabase/supabase.types';
+import QuillEditor from '@/components/quillEditor/quill';
+
+const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
+  const response = (await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.id, params.workspaceId))
+    .limit(1)) as workspace[];
+
+  console.log(response[0].createdAt);
+
   return (
-    <div>
-      <Editor></Editor>
+    <div className="relative ">
+      <QuillEditor
+        dirType="workspace"
+        fileId={params.workspaceId}
+        dirDetails={response[0] || {}}
+      ></QuillEditor>
     </div>
   );
 };

@@ -2,7 +2,6 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 import {
-  Select,
   SelectContent,
   SelectGroup,
   SelectItem,
@@ -20,6 +19,7 @@ import {
   getSharedWorkspaces,
 } from '@/lib/supabase/queries';
 import ClientSelector from './clientSelector';
+import WorkspaceClientHelper from './workspaces-client-helper';
 
 interface WorkspaceDropdownProps {
   workspaceId: string;
@@ -48,6 +48,13 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = async ({
         alt="Workspace Logo"
         width={42}
         height={42}
+      />
+      <WorkspaceClientHelper
+        allWorkspaces={[
+          ...privateWorkspaces,
+          ...collaboratingWorkspaces,
+          ...sharedWorkspaces,
+        ]}
       />
       <ClientSelector defaultValue={String(workspaceId) || 'Workspace'}>
         <SelectTrigger className="w-full h-12 border-none">

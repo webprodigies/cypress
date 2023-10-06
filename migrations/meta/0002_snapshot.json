@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "c40e2a16-5d57-4f2c-b928-e80da1a1121e",
-  "prevId": "3f50166c-12af-4601-bfc7-1b082cddebee",
+  "id": "49af128d-adfb-44dd-812e-ed781949d18c",
+  "prevId": "0a2299a9-cfb8-4dff-a163-4c8f274aa647",
   "tables": {
     "collaborators": {
       "name": "collaborators",
@@ -58,14 +58,76 @@
         }
       },
       "compositePrimaryKeys": {
-        "collaborators_user_id_workspace_id": {
-          "name": "collaborators_user_id_workspace_id",
+        "collaborators_workspace_id_user_id": {
+          "name": "collaborators_workspace_id_user_id",
           "columns": [
-            "user_id",
-            "workspace_id"
+            "workspace_id",
+            "user_id"
           ]
         }
       },
+      "uniqueConstraints": {}
+    },
+    "files": {
+      "name": "files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "folder_id": {
+          "name": "folder_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_id": {
+          "name": "icon_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "files_folder_id_folders_folder_id_fk": {
+          "name": "files_folder_id_folders_folder_id_fk",
+          "tableFrom": "files",
+          "tableTo": "folders",
+          "columnsFrom": [
+            "folder_id"
+          ],
+          "columnsTo": [
+            "folder_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "folders": {
@@ -91,6 +153,24 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_id": {
+          "name": "icon_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -173,7 +253,7 @@
           "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "workspace_owner": {
@@ -193,6 +273,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -224,11 +310,33 @@
         "aal3": "aal3"
       }
     },
+    "action": {
+      "name": "action",
+      "values": {
+        "INSERT": "INSERT",
+        "UPDATE": "UPDATE",
+        "DELETE": "DELETE",
+        "TRUNCATE": "TRUNCATE",
+        "ERROR": "ERROR"
+      }
+    },
     "code_challenge_method": {
       "name": "code_challenge_method",
       "values": {
         "s256": "s256",
         "plain": "plain"
+      }
+    },
+    "equality_op": {
+      "name": "equality_op",
+      "values": {
+        "eq": "eq",
+        "neq": "neq",
+        "lt": "lt",
+        "lte": "lte",
+        "gt": "gt",
+        "gte": "gte",
+        "in": "in"
       }
     },
     "factor_status": {

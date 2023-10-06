@@ -6,8 +6,8 @@ import React, { FC } from 'react';
 import CypressHomeIcon from '../icons/cypressHomeIcon';
 import CypressMessageIcon from '../icons/cypressMessageIcon';
 import CypressSettingsIcon from '../icons/cypressSettingsIcon';
-import CypressMarketPlaceIcon from '../icons/cypressMarketIcon';
 import CypressTemplateIcon from '../icons/cypressTemplatesIcon';
+import CypressTrashIcon from '../icons/cypressTrashIcon';
 
 export const nativeNavigations = [
   {
@@ -26,14 +26,14 @@ export const nativeNavigations = [
     customIcon: CypressSettingsIcon,
   },
   {
-    title: 'Marketplace',
-    id: 'marketplace',
-    customIcon: CypressMarketPlaceIcon,
-  },
-  {
     title: 'Templates',
     id: 'templates',
     customIcon: CypressTemplateIcon,
+  },
+  {
+    title: 'Trash',
+    id: 'trash',
+    customIcon: CypressTrashIcon,
   },
 ] as const;
 

@@ -38,6 +38,8 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ children }) => {
   return (
     <Button
       variant="ghost"
+      size="icon"
+      className='p-0'
       onClick={logoutUser}
     >
       {children}

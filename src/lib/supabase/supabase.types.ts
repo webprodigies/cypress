@@ -6,6 +6,7 @@ import {
   workspaces,
 } from '../../../migrations/schema';
 import { ICON_NAMES } from '../constants';
+import { OutputBlockData } from '@editorjs/editorjs';
 
 export type Json =
   | string
@@ -49,20 +50,63 @@ export interface Database {
           }
         ];
       };
+      files: {
+        Row: {
+          created_at: string;
+          data: string | null;
+          folder_id: string;
+          icon_id: string;
+          id: string;
+          title: string;
+        };
+        Insert: {
+          created_at?: string;
+          data?: string | null;
+          folder_id: string;
+          icon_id: string;
+          id?: string;
+          title: string;
+        };
+        Update: {
+          created_at?: string;
+          data?: string | null;
+          folder_id?: string;
+          icon_id?: string;
+          id?: string;
+          title?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'files_folder_id_folders_folder_id_fk';
+            columns: ['folder_id'];
+            referencedRelation: 'folders';
+            referencedColumns: ['folder_id'];
+          }
+        ];
+      };
       folders: {
         Row: {
           created_at: string;
+          data: string | null;
           folder_id: string;
+          icon_id: string;
+          title: string;
           workspace_id: string;
         };
         Insert: {
           created_at?: string;
+          data?: string | null;
           folder_id?: string;
+          icon_id: string;
+          title: string;
           workspace_id: string;
         };
         Update: {
           created_at?: string;
+          data?: string | null;
           folder_id?: string;
+          icon_id?: string;
+          title?: string;
           workspace_id?: string;
         };
         Relationships: [
@@ -103,21 +147,24 @@ export interface Database {
       };
       workspaces: {
         Row: {
-          created_at: string;
+          created_at: string | null;
+          data: string | null;
           icon_id: string;
           id: string;
           title: string;
           workspace_owner: string;
         };
         Insert: {
-          created_at?: string;
+          created_at?: string | null;
+          data?: string | null;
           icon_id: string;
           id?: string;
           title: string;
           workspace_owner: string;
         };
         Update: {
-          created_at?: string;
+          created_at?: string | null;
+          data?: string | null;
           icon_id?: string;
           id?: string;
           title?: string;
@@ -141,7 +188,9 @@ export interface Database {
     };
     Enums: {
       aal_level: 'aal1' | 'aal2' | 'aal3';
+      action: 'INSERT' | 'UPDATE' | 'DELETE' | 'TRUNCATE' | 'ERROR';
       code_challenge_method: 's256' | 'plain';
+      equality_op: 'eq' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte' | 'in';
       factor_status: 'unverified' | 'verified';
       factor_type: 'totp' | 'webauthn';
       key_status: 'default' | 'valid' | 'invalid' | 'expired';
@@ -176,32 +225,12 @@ export type CollaboratedWorkspace = {
 };
 
 export type workspace = InferSelectModel<typeof workspaces>;
+export type testType = workspace & { iconId: 'perrin' | 'something' };
 export type profiles = InferSelectModel<typeof profiles>;
-export type Folder = {
-  [T in keyof InferSelectModel<typeof folders>]: T extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : InferSelectModel<typeof folders>[T];
-};
-export type File = {
-  [T in keyof InferSelectModel<typeof files>]: T extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : InferSelectModel<typeof files>[T];
-};
-// export type File = {
-//   [T in keyof InferSelectModel<typeof >]: T extends 'iconId'
-//     ? (typeof ICON_NAMES)[number]
-//     : InferSelectModel<typeof folders>[T];
-// };
+export type Folder = InferSelectModel<typeof folders>;
+export type File = InferSelectModel<typeof files>;
 
-export type WorkspacesWithIconIds = {
-  [K in keyof workspace]: K extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : workspace[K];
-};
 
-export type CollaboratedWorkspaces = [WorkspacesWithIconIds];
-export type PrivateWorkspaces = [WorkspacesWithIconIds];
-export type SharedWorkspaces = [WorkspacesWithIconIds];
 export type AddWorkspaceCollaborator = {
   userId: string;
   workspaceId: string;

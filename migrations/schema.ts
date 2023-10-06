@@ -7,6 +7,8 @@ export const aalLevel = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
 export const codeChallengeMethod = pgEnum("code_challenge_method", ['s256', 'plain'])
 export const factorStatus = pgEnum("factor_status", ['unverified', 'verified'])
 export const factorType = pgEnum("factor_type", ['totp', 'webauthn'])
+export const equalityOp = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
+export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'ERROR'])
 
 
 export const workspaces = pgTable("workspaces", {
@@ -15,6 +17,8 @@ export const workspaces = pgTable("workspaces", {
 	workspaceOwner: uuid("workspace_owner").notNull().references(() => profiles.id, { onDelete: "cascade" } ),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const profiles = pgTable("profiles", {
@@ -32,14 +36,18 @@ export const folders = pgTable("folders", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const files = pgTable("files", {
-	id: uuid("id").defaultRandom().notNull(),
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	folderId: uuid("folder_id").notNull().references(() => folders.folderId, { onDelete: "cascade" } ),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	title: text("title").notNull(),
 	iconId: text("icon_id").notNull(),
+	data: text("data"),
+	inTrash: text("in_trash"),
 });
 
 export const collaborators = pgTable("collaborators", {
