@@ -28,7 +28,7 @@ import { v4 as uuid } from 'uuid';
 import { useToast } from './ui/use-toast';
 
 interface FileCreatorProps {
-  type?: 'workspace' | 'folder' | 'file';
+  type?: 'workspace' | 'folder';
   parent: string;
   getNewValue?: (newValue: {
     id: string;
@@ -85,11 +85,6 @@ const FileCreator: React.FC<FileCreatorProps> = ({
           });
           router.refresh();
         }
-      } else if (type === 'folder') {
-        await createFolder(parent, title, selectedIcon);
-        router.refresh();
-      } else if (type === 'file') {
-        await createFile(parent, title, uniqueId, selectedIcon);
       }
     }
   };

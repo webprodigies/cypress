@@ -1,15 +1,8 @@
 'use client';
 import React, { FC, ReactNode, useState } from 'react';
 import Picker from 'emoji-picker-react';
-import { updateEmojiFile, updateEmojiFolder } from '@/lib/supabase/queries';
 import { useRouter } from 'next/navigation';
-import {
-  TooltipContent,
-  Tooltip,
-  TooltipTrigger,
-  TooltipProvider,
-} from './ui/tooltip';
-import { XIcon } from 'lucide-react';
+
 import {
   Popover,
   PopoverContent,

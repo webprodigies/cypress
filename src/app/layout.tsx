@@ -4,8 +4,7 @@ import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { twMerge } from 'tailwind-merge';
 import { SocketProvider } from '@/lib/providers/socket-provider';
-import { FilesProvider } from '@/lib/providers/file-provider';
-import { FolderProvider } from '@/lib/providers/folder-provider';
+import { AppStateProvider } from '@/lib/providers/state-provider';
 
 const inter = DM_Sans({ subsets: ['latin'] });
 
@@ -19,6 +18,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  //CHALLENGE Files keep reseting when we change between workspaces.
+  //CHALLENGE How to cache 
   return (
     <html lang="en">
       <body className={twMerge('bg-background', inter.className)}>
@@ -27,11 +28,9 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
         >
-          <FilesProvider>
-            <FolderProvider>
-              <SocketProvider>{children}</SocketProvider>
-            </FolderProvider>
-          </FilesProvider>
+          <AppStateProvider>
+            <SocketProvider>{children}</SocketProvider>
+          </AppStateProvider>
         </ThemeProvider>
       </body>
     </html>

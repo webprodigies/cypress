@@ -6,7 +6,6 @@ import React, { FC } from 'react';
 import CypressHomeIcon from '../icons/cypressHomeIcon';
 import CypressMessageIcon from '../icons/cypressMessageIcon';
 import CypressSettingsIcon from '../icons/cypressSettingsIcon';
-import CypressMarketPlaceIcon from '../icons/cypressMarketIcon';
 import CypressTemplateIcon from '../icons/cypressTemplatesIcon';
 import CypressTrashIcon from '../icons/cypressTrashIcon';
 

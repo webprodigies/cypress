@@ -6,24 +6,30 @@ import {
 } from '../ui/accordion';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import CustomDialogTrigger from '../customDialogTrigger';
 import TooltipComponent from '../tooltip';
-import { Delete, MoreHorizontalIcon, PlusIcon, Trash } from 'lucide-react';
+import { PlusIcon, Trash } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 
 import EmojiPicker from '../emoji-picker';
-import { useFiles } from '@/lib/providers/file-provider';
 import dynamic from 'next/dynamic';
-import { useFolders } from '@/lib/providers/folder-provider';
 import {
   createFile,
+  deleteFile,
+  deleteFolder,
+  sendFileToTrash,
+  sendFolderToTrash,
   updateEmojiFile,
   updateEmojiFolder,
+  updateFile,
+  updateFolder,
   updateTitleFile,
   updateTitleFolder,
 } from '@/lib/supabase/queries';
+import { useAppState } from '@/lib/providers/state-provider';
+import { File } from '@/lib/supabase/supabase.types';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 interface DropdownProps {
   title: string;
@@ -31,9 +37,6 @@ interface DropdownProps {
   listType: 'folder' | 'file' | 'native';
   iconId: string;
   children?: React.ReactNode;
-  onClick?: (id: string, listType: 'folder' | 'file') => void;
-  test?: any;
-  defaultValue?: string[];
   disabled?: boolean;
   customIcon?: React.ReactNode;
 }
@@ -44,21 +47,39 @@ export function Dropdown({
   listType,
   iconId,
   children,
-  onClick,
-  test,
   disabled,
-  defaultValue,
   customIcon,
   ...props
 }: DropdownProps) {
-  const { folders, setFolders } = useFolders();
   const CustomAlert = dynamic(() => import('../custom-alert'), { ssr: false });
-  const { files, setFiles } = useFiles();
+  const supabase = createClientComponentClient();
+  const { state, dispatch, workspaceId } = useAppState();
   const [isEditing, setIsEditing] = useState(false);
-  const [folderTitle, setFolderTitle] = useState(title);
-  const [fileTitle, setFileTitle] = useState(title);
   const router = useRouter();
   const pathname = usePathname();
+
+  const folderTitle: string | undefined = useMemo(() => {
+    if (listType === 'folder') {
+      const stateTitle = state.workspaces
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.folderId === id)?.title;
+      if (title === stateTitle || !stateTitle) return title;
+      return stateTitle;
+    }
+  }, [state, listType]);
+
+  //Memoized file title so that when the value changes we can use this
+  const fileTitle: string | undefined = useMemo(() => {
+    if (listType === 'file') {
+      const fileAndFolderId = id.split('folder');
+      const stateTitle = state.workspaces
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.folderId === fileAndFolderId[0])
+        ?.files.find((file) => file.id === fileAndFolderId[1])?.title;
+      if (title === stateTitle || !stateTitle) return title;
+      return stateTitle;
+    }
+  }, [state, listType]);
 
   const navigatePage = (accordianId: string, type: string) => {
     if (!pathname) return;
@@ -76,6 +97,7 @@ export function Dropdown({
   };
 
   const addNewFile = async () => {
+    if (!workspaceId) return;
     const newFile = {
       folderId: id,
       data: null,
@@ -84,18 +106,11 @@ export function Dropdown({
       title: 'Untitled',
       iconId: '📄',
       id: uuid(),
-    };
+    } as File;
 
-    setFiles((currentFolder) => {
-      return currentFolder.map((folder) => {
-        if (folder.folderId === id) {
-          return {
-            folderId: id,
-            files: [...folder.files, newFile],
-          };
-        }
-        return folder;
-      });
+    dispatch({
+      type: 'ADD_FILE',
+      payload: { file: newFile, folderId: id, workspaceId },
     });
     await createFile(newFile);
   };
@@ -109,18 +124,12 @@ export function Dropdown({
     setIsEditing(false);
     const folderId = id.split('folder');
     if (folderId.length === 1) {
-      if (!folderTitle) {
-        setFolderTitle(title);
-        return;
-      }
+      if (!folderTitle) return;
       await updateTitleFolder(folderId[0], folderTitle);
     }
     //If it is a file
     if (folderId.length === 2 && folderId[1]) {
-      if (!fileTitle) {
-        setFileTitle(title);
-        return;
-      }
+      if (!fileTitle) return;
       await updateTitleFile(folderId[1], fileTitle);
     }
   };
@@ -128,46 +137,24 @@ export function Dropdown({
   const fileTitleChange = (e: any) => {
     const fileAndFolderId = id.split('folder');
     if (fileAndFolderId.length === 2 && fileAndFolderId[1]) {
-      setFiles((currentFolders) =>
-        currentFolders.map((folder) => {
-          if (folder.folderId === fileAndFolderId[0]) {
-            const updatedFiles = folder.files.map((file) => {
-              if (file.id === fileAndFolderId[1]) {
-                return {
-                  ...file,
-                  title: e.target.value,
-                };
-              }
-              return file;
-            });
-
-            return {
-              ...folder,
-              files: updatedFiles,
-            };
-          }
-          return folder;
-        })
-      );
-      setFileTitle(e.target.value);
+      dispatch({
+        type: 'UPDATE_TITLE',
+        payload: {
+          type: 'file',
+          title: e.target.value,
+          id: fileAndFolderId[1],
+        },
+      });
     }
   };
 
   const folderTitleChange = (e: any) => {
     const folderId = id.split('folder');
     if (folderId.length === 1) {
-      setFolders(
-        folders.map((folder) => {
-          if (folder.folderId === folderId[0]) {
-            return {
-              ...folder,
-              title: e.target.value,
-            };
-          }
-          return folder;
-        })
-      );
-      setFolderTitle(e.target.value);
+      dispatch({
+        type: 'UPDATE_TITLE',
+        payload: { type: 'folder', title: e.target.value, id: folderId[0] },
+      });
     }
   };
 
@@ -175,38 +162,35 @@ export function Dropdown({
     const pathId = id.split('folder');
     //folder
     if (listType === 'folder' && pathId.length === 1) {
+      dispatch({
+        type: 'UPDATE_EMOJI',
+        payload: { type: 'folder', id: pathId[0], emoji: selectedEmoji },
+      });
       await updateEmojiFolder(pathId[0], selectedEmoji);
-      router.refresh();
     }
     //file
     if (listType === 'file' && pathId.length === 2) {
-      setFiles((currentFolders) =>
-        currentFolders.map((folder) => {
-          if (folder.folderId === pathId[0]) {
-            const updatedFiles = folder.files.map((file) => {
-              if (file.id === pathId[1]) {
-                return {
-                  ...file,
-                  iconId: selectedEmoji,
-                };
-              }
-              return file;
-            });
-
-            return {
-              ...folder,
-              files: updatedFiles,
-            };
-          }
-          return folder;
-        })
-      );
+      dispatch({
+        type: 'UPDATE_EMOJI',
+        payload: { type: 'file', id: pathId[1], emoji: selectedEmoji },
+      });
       await updateEmojiFile(pathId[1], selectedEmoji);
     }
   };
 
   //WIP
-  const deleteFolderHandler = () => {};
+  const moveToTrash = async () => {
+    const user = await supabase.auth.getUser();
+    const pathId = id.split('folder');
+    if (listType === 'folder') {
+      dispatch({ type: 'TRASH_FOLDER', payload: id });
+      await sendFolderToTrash(id, `Deleted by ${user.data.user?.email}`);
+    }
+    if (listType === 'file') {
+      dispatch({ type: 'TRASH_FILE', payload: pathId[1] });
+      await sendFileToTrash(pathId[1], `Deleted by ${user.data.user?.email}`);
+    }
+  };
 
   const isFolder = listType === 'folder';
   const groupIdentifies = clsx(
@@ -281,7 +265,7 @@ export function Dropdown({
             <div className={commandStyles}>
               <TooltipComponent message="Delete Folder">
                 <CustomAlert
-                  continueHandler={deleteFolderHandler}
+                  continueHandler={moveToTrash}
                   title="Are your sure?"
                   description="This will send all data related to this folder including files to the trash. You can restore it from there if needed."
                   continueTitle="Delete"
@@ -307,7 +291,7 @@ export function Dropdown({
             <div className="h-full hidden group-hover/file:block rounded-sm absolute right-0 items-center gap-2  justify-center">
               <TooltipComponent message="Delete File">
                 <CustomAlert
-                  continueHandler={deleteFolderHandler}
+                  continueHandler={moveToTrash}
                   title="Are your sure?"
                   description="This will send all data related to this file to the trash. You can restore it from there if needed."
                   continueTitle="Delete"
@@ -324,10 +308,12 @@ export function Dropdown({
         </div>
       </AccordionTrigger>
 
-      <AccordionContent className="">
-        {files
-          .find((folder) => folder.folderId === id)
-          ?.files.map((file, index) => {
+      <AccordionContent>
+        {state.workspaces
+          .find((workspace) => workspace.id === workspaceId)
+          ?.folders.find((folder) => folder.folderId === id)
+          ?.files.filter((file) => !file.inTrash)
+          .map((file) => {
             const customfileId = `${id}folder${file.id}`;
             return (
               <Dropdown

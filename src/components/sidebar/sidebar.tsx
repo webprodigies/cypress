@@ -32,28 +32,11 @@ const Sidebar: React.FC<SidebarProps> = async ({ params }) => {
         <PlanUsage />
         <NativeNavigation myWorkspaceId={params.workspaceId} />
         <ScrollArea className="overflow-scroll relative h-full ">
-          <div className="flex sticky z-50 top-0 bg-background w-full  h-10 group/title justify-between items-center pr-4 text-Neutrals-8">
-            <span className="text-Neutrals-8 font-bold text-xs">FOLDERS</span>
-            <TooltipComponent message="Create Folder">
-              <CustomDialogTrigger
-                header="Create a new folder"
-                description="Folders allow you to group files together."
-                content={
-                  <FileCreator
-                    parent={params.workspaceId}
-                    type="folder"
-                  />
-                }
-              >
-                <PlusIcon
-                  size={16}
-                  className="group-hover/title:inline-block hidden cursor-pointer hover:dark:text-white"
-                />
-              </CustomDialogTrigger>
-            </TooltipComponent>
-          </div>
           <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
-          <TempDropdown workspaceFolders={workspaceFolders} />
+          <TempDropdown
+            workspaceFolders={workspaceFolders}
+            workspaceId={params.workspaceId}
+          />
         </ScrollArea>
         <UserCard />
       </div>

@@ -230,15 +230,7 @@ export type profiles = InferSelectModel<typeof profiles>;
 export type Folder = InferSelectModel<typeof folders>;
 export type File = InferSelectModel<typeof files>;
 
-export type WorkspacesWithIconIds = {
-  [K in keyof workspace]: K extends 'iconId'
-    ? (typeof ICON_NAMES)[number]
-    : workspace[K];
-};
 
-export type CollaboratedWorkspaces = [WorkspacesWithIconIds];
-export type PrivateWorkspaces = [WorkspacesWithIconIds];
-export type SharedWorkspaces = [WorkspacesWithIconIds];
 export type AddWorkspaceCollaborator = {
   userId: string;
   workspaceId: string;

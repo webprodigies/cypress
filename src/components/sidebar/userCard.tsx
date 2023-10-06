@@ -23,24 +23,26 @@ const UserCard = async () => {
     .where(eq(profiles.id, user?.id));
 
   return (
-    <article className="cursor-pointer flex justify-between items-center p-2 dark:bg-Neutrals-12 rounded-3xl">
-      <aside className="flex justify-center items-center gap-4">
+    <article className="cursor-pointer flex justify-between items-center px-4 py-2 dark:bg-Neutrals-12 rounded-3xl">
+      <aside className="flex justify-center items-center gap-2">
         <Image
           src={Avatar}
           alt="avatar logo"
-          className="rounded-full w-8 height-8"
+          className="rounded-full w-6 h-6"
         />
         <div className="flex flex-col">
           <span className="text-muted-foreground">Free Plan</span>
-          <small className="w-[130px] overflow-hidden overflow-ellipsis">
+          <small className="w-[100px] overflow-hidden overflow-ellipsis">
             {profile[0].email}
           </small>
         </div>
       </aside>
-      <LogoutButton>
-        <LogOut></LogOut>
-      </LogoutButton>
-      <ModeToggle />
+      <div className="flex items-center justify-center">
+        <LogoutButton>
+          <LogOut />
+        </LogoutButton>
+        <ModeToggle />
+      </div>
     </article>
   );
 };

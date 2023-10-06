@@ -19,11 +19,9 @@ const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
   return (
     <div className="relative ">
       <QuillEditor
-        defaultValue={response[0]?.data}
         dirType="workspace"
         fileId={params.workspaceId}
-        icon={response[0]?.iconId}
-        title={response[0].title}
+        dirDetails={response[0] || {}}
       ></QuillEditor>
     </div>
   );

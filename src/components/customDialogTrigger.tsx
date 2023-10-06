@@ -21,7 +21,6 @@ interface customDialogTriggerProps {
 const CustomDialogTrigger: React.FC<customDialogTriggerProps> = ({
   header,
   content,
-
   children,
   description,
   footer,

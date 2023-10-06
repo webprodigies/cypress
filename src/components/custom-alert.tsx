@@ -43,10 +43,10 @@ const CustomAlert = ({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{continueTitle}</AlertDialogCancel>
-          <AlertDialogAction onClick={continueHandler}>
-            {cancelTitle}
-          </AlertDialogAction>
+          <AlertDialogCancel onClick={continueHandler}>
+            {continueTitle}
+          </AlertDialogCancel>
+          <AlertDialogAction>{cancelTitle}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
