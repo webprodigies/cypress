@@ -20,10 +20,9 @@ const Folder = async ({ params }: { params: { folderId: string } }) => {
   return (
     <div className="relative ">
       <QuillEditor
-        defaultValue={response[0]?.data}
         dirType="folder"
         fileId={params.folderId}
-        icon={response[0]?.iconId}
+        dirDetails={response[0] || {}}
       ></QuillEditor>
     </div>
   );

@@ -14,8 +14,8 @@ import { usePathname } from 'next/navigation';
 import { getFiles } from '../supabase/queries';
 import { folders } from '../supabase/schema';
 
-type appFoldersType = Folder & { files: File[] | [] };
-type appWorkspacesType = workspace & { folders: appFoldersType[] | [] };
+export type appFoldersType = Folder & { files: File[] | [] };
+export type appWorkspacesType = workspace & { folders: appFoldersType[] | [] };
 
 export interface AppState {
   workspaces: appWorkspacesType[] | [];
@@ -37,9 +37,9 @@ type Action =
     }
   | {
       type: 'DELETE_FOLDER';
-      payload: { workspaceId: string; folderId: string };
+      payload: { folderId: string };
     }
-  | { type: 'TRASH_FOLDER'; payload: string }
+  | { type: 'TRASH_FOLDER'; payload: { id: string; message: string } }
   | { type: 'RESTORE_FOLDER'; payload: string }
   | {
       type: 'SET_FILES';
@@ -53,7 +53,7 @@ type Action =
       type: 'DELETE_FILE';
       payload: { workspaceId: string; folderId: string; fileId: string };
     }
-  | { type: 'TRASH_FILE'; payload: string }
+  | { type: 'TRASH_FILE'; payload: { fileId: string; message: string } }
   | { type: 'RESTORE_FILE'; payload: { folderId: string; fileId: string } }
   | {
       type: 'UPDATE_EMOJI';
@@ -81,14 +81,14 @@ type Action =
     }
   | {
       type: 'UPDATE_WORKSPACE_DATA';
-      payload: { workspaceId: string; workspace: workspace };
+      payload: { workspaceId: string; workspace: Partial<workspace> };
     }
   | {
       type: 'UPDATE_FOLDER_DATA';
       payload: {
         workspaceId: string;
         folderId: string;
-        folder: Folder;
+        folder: Partial<Folder>;
       };
     }
   | {
@@ -97,7 +97,7 @@ type Action =
         workspaceId: string;
         folderId: string;
         fileId: string;
-        file: File;
+        file: Partial<File>;
       };
     };
 
@@ -184,15 +184,18 @@ const appReducer = (
       return {
         ...state,
         workspaces: state.workspaces.map((workspace) => {
-          console.log('THIS IS THE FOLDER ID ', action.payload.folderId,"WORKSPACE",action.payload.workspaceId);
-          if (workspace.id === action.payload.workspaceId) {
+          const updatedFolders = workspace.folders.filter(
+            (folder) => folder.folderId !== action.payload.folderId
+          );
+
+          if (updatedFolders.length !== workspace.folders.length) {
+            // If the folder was removed, create a new workspace with the updated folders
             return {
               ...workspace,
-              folders: workspace.folders.filter(
-                (folder) => folder.folderId !== action.payload.folderId
-              ),
+              folders: updatedFolders,
             };
           }
+
           return workspace;
         }),
       };
@@ -202,13 +205,13 @@ const appReducer = (
         workspaces: state.workspaces.map((workspace) => ({
           ...workspace,
           folders: workspace.folders.map((folder) => {
-            if (folder.folderId === action.payload) {
+            if (folder.folderId === action.payload.id) {
               return {
                 ...folder,
-                inTrash: 'In Trash',
+                inTrash: action.payload.message,
                 files: folder.files.map((file) => ({
                   ...file,
-                  inTrash: 'In Trash',
+                  inTrash: action.payload.message,
                 })),
               };
             } else {
@@ -312,10 +315,10 @@ const appReducer = (
           folders: workspace.folders.map((folder) => ({
             ...folder,
             files: folder.files.map((file) => {
-              if (file.id === action.payload) {
+              if (file.id === action.payload.fileId) {
                 return {
                   ...file,
-                  inTrash: 'In Trash',
+                  inTrash: action.payload.message,
                 };
               } else {
                 return file;
@@ -597,7 +600,6 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
   //Fetch Files for the folder when the url changes changes
   useEffect(() => {
     if (!folderId || !workspaceId) return;
-    console.log('RUNNING');
 
     const fetchFiles = async () => {
       const response = await getFiles(folderId);

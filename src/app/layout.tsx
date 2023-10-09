@@ -19,7 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   //CHALLENGE Files keep reseting when we change between workspaces.
-  //CHALLENGE How to cache 
+  //CHALLENGE How to cache
+  // WHEN YOU trash a folder files are also trashed but now when you try to 
+  // CHALLENGE WHEN SOMEONE IS ADDED AS A WORKSPACE COLLABORATOR THEN you need to create the real time feature.
   return (
     <html lang="en">
       <body className={twMerge('bg-background', inter.className)}>

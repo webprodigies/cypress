@@ -20,7 +20,6 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponseServerIo) => {
     });
     io.on('connection', (s) => {
       s.on('create-room', (fileId) => {
-        console.log('SERVER CONNECTED TO ', fileId);
         s.join(fileId);
       });
       s.on('send-changes', (deltas,fileId) => {

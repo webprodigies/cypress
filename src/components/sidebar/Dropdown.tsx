@@ -16,8 +16,6 @@ import EmojiPicker from '../emoji-picker';
 import dynamic from 'next/dynamic';
 import {
   createFile,
-  deleteFile,
-  deleteFolder,
   sendFileToTrash,
   sendFolderToTrash,
   updateEmojiFile,
@@ -51,7 +49,6 @@ export function Dropdown({
   customIcon,
   ...props
 }: DropdownProps) {
-  const CustomAlert = dynamic(() => import('../custom-alert'), { ssr: false });
   const supabase = createClientComponentClient();
   const { state, dispatch, workspaceId } = useAppState();
   const [isEditing, setIsEditing] = useState(false);
@@ -81,6 +78,7 @@ export function Dropdown({
     }
   }, [state, listType]);
 
+  //WIP
   const navigatePage = (accordianId: string, type: string) => {
     if (!pathname) return;
     const [workspaceId] = pathname.split('/dashboard/')[1].split('/');
@@ -98,7 +96,7 @@ export function Dropdown({
 
   const addNewFile = async () => {
     if (!workspaceId) return;
-    const newFile = {
+    const newFile: File = {
       folderId: id,
       data: null,
       createdAt: new Date().toISOString(),
@@ -106,7 +104,8 @@ export function Dropdown({
       title: 'Untitled',
       iconId: '📄',
       id: uuid(),
-    } as File;
+      workspaceId,
+    };
 
     dispatch({
       type: 'ADD_FILE',
@@ -183,11 +182,23 @@ export function Dropdown({
     const user = await supabase.auth.getUser();
     const pathId = id.split('folder');
     if (listType === 'folder') {
-      dispatch({ type: 'TRASH_FOLDER', payload: id });
-      await sendFolderToTrash(id, `Deleted by ${user.data.user?.email}`);
+      dispatch({
+        type: 'TRASH_FOLDER',
+        payload: {
+          id: pathId[0],
+          message: `Deleted by ${user.data.user?.email}`,
+        },
+      });
+      await sendFolderToTrash(pathId[0], `Deleted by ${user.data.user?.email}`);
     }
     if (listType === 'file') {
-      dispatch({ type: 'TRASH_FILE', payload: pathId[1] });
+      dispatch({
+        type: 'TRASH_FILE',
+        payload: {
+          fileId: pathId[1],
+          message: `Deleted by ${user.data.user?.email}`,
+        },
+      });
       await sendFileToTrash(pathId[1], `Deleted by ${user.data.user?.email}`);
     }
   };
@@ -264,18 +275,11 @@ export function Dropdown({
           {listType === 'folder' && !isEditing && (
             <div className={commandStyles}>
               <TooltipComponent message="Delete Folder">
-                <CustomAlert
-                  continueHandler={moveToTrash}
-                  title="Are your sure?"
-                  description="This will send all data related to this folder including files to the trash. You can restore it from there if needed."
-                  continueTitle="Delete"
-                  cancelTitle="Cancel"
-                >
-                  <Trash
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomAlert>
+                <Trash
+                  onClick={moveToTrash}
+                  size={15}
+                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                />
               </TooltipComponent>
 
               <TooltipComponent message="Add File">
@@ -290,18 +294,11 @@ export function Dropdown({
           {listType === 'file' && !isEditing && (
             <div className="h-full hidden group-hover/file:block rounded-sm absolute right-0 items-center gap-2  justify-center">
               <TooltipComponent message="Delete File">
-                <CustomAlert
-                  continueHandler={moveToTrash}
-                  title="Are your sure?"
-                  description="This will send all data related to this file to the trash. You can restore it from there if needed."
-                  continueTitle="Delete"
-                  cancelTitle="Cancel"
-                >
-                  <Trash
-                    size={15}
-                    className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
-                  />
-                </CustomAlert>
+                <Trash
+                  onClick={moveToTrash}
+                  size={15}
+                  className="hover:dark:text-white dark:text-Neutrals-7 transition-colors"
+                />
               </TooltipComponent>
             </div>
           )}

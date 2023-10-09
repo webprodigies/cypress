@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "659b065b-a677-46ed-9832-d434b7afd20f",
+  "id": "0639b80e-49cb-4e34-af6c-c224ee938bf0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "collaborators": {
@@ -75,9 +75,15 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         },
         "folder_id": {
           "name": "folder_id",
@@ -104,16 +110,34 @@
           "primaryKey": false,
           "notNull": true
         },
-        "blocks": {
-          "name": "blocks",
-          "type": "json",
+        "data": {
+          "name": "data",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"blocks\":[]}'::json"
+          "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
+        "files_workspace_id_workspaces_id_fk": {
+          "name": "files_workspace_id_workspaces_id_fk",
+          "tableFrom": "files",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "files_folder_id_folders_folder_id_fk": {
           "name": "files_folder_id_folders_folder_id_fk",
           "tableFrom": "files",
@@ -167,12 +191,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "blocks": {
-          "name": "blocks",
-          "type": "json",
+        "data": {
+          "name": "data",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"blocks\":[]}'::json"
+          "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -276,12 +305,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "blocks": {
-          "name": "blocks",
-          "type": "json",
+        "data": {
+          "name": "data",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "default": "'{\"blocks\":[]}'::json"
+          "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -11,18 +11,11 @@ import {
 import dynamic from 'next/dynamic';
 
 interface EmojiPickerProps {
-  dropdownId?: string;
-  type: 'file' | 'folder' | 'native' | 'workspace';
   children: ReactNode;
   getValue?: (emoji: string) => void;
 }
 
-const EmojiPicker: FC<EmojiPickerProps> = ({
-  dropdownId,
-  type,
-  children,
-  getValue,
-}) => {
+const EmojiPicker: FC<EmojiPickerProps> = ({ children, getValue }) => {
   const router = useRouter();
   const Picker = dynamic(() => import('emoji-picker-react'));
 
@@ -36,7 +29,7 @@ const EmojiPicker: FC<EmojiPickerProps> = ({
           {children}
         </PopoverTrigger>
         <PopoverContent className="p-0 border-none">
-          <Picker onEmojiClick={onClick}></Picker>
+          <Picker onEmojiClick={onClick} />
         </PopoverContent>
       </Popover>
     </div>
