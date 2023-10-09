@@ -4,11 +4,11 @@ import React, { FC, useEffect, useMemo, useState } from 'react';
 import ClientAccordian from './clientAccordian';
 import { Dropdown } from './Dropdown';
 import { AppState, useAppState } from '@/lib/providers/state-provider';
-import useRealtimeFiles from '@/lib/hooks/useRealtimeFiles';
 import TooltipComponent from '../tooltip';
 import { PlusIcon } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
 import { createFolder } from '@/lib/supabase/queries';
+import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
 
 interface TempDropdownProps {
   workspaceFolders: Folder[];
@@ -19,7 +19,7 @@ const TempDropdown: FC<TempDropdownProps> = ({
   workspaceFolders,
   workspaceId,
 }) => {
-  useRealtimeFiles();
+  useSupabaseRealtime();
   const { state, dispatch } = useAppState();
   // Use a local state variable to track whether to use server data or local state
   const [useServerData, setUseServerData] = useState(true);
@@ -59,10 +59,6 @@ const TempDropdown: FC<TempDropdownProps> = ({
       return stateWorkspaceFolders;
     }
   }, [state, workspaceFolders, workspaceId, useServerData]);
-
-  useEffect(() => {
-    console.log(folders, 'THIS IS WHAT IT IS USING');
-  }, [folders]);
 
   const addFolderHandler = async () => {
     const newFolder: Folder = {

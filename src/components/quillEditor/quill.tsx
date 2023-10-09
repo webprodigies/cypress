@@ -241,7 +241,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       quill.off('text-change', quilHandler);
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [quill, socket, fileId, , details]);
+  }, [quill, socket, fileId, details]);
 
   const restoreFileHandler = async () => {
     if (dirType === 'file') {
@@ -254,6 +254,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
     if (dirType === 'folder') {
       if (!fileId) return;
+
       dispatch({
         type: 'RESTORE_FOLDER',
         payload: fileId,
@@ -276,9 +277,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       if (!workspaceId || !folderId) return;
       dispatch({
         type: 'DELETE_FOLDER',
-        payload: { workspaceId, folderId },
+        payload: { folderId },
       });
-      await deleteFolder(fileId);
+      await deleteFolder(folderId);
       router.replace(`/dashboard/${workspaceId}`);
     }
   };

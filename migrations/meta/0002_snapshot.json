@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "49af128d-adfb-44dd-812e-ed781949d18c",
-  "prevId": "0a2299a9-cfb8-4dff-a163-4c8f274aa647",
+  "id": "8abd88b3-9e19-4de0-acf0-e11957d22b6e",
+  "prevId": "067b4c1d-72eb-40ad-b375-3e688daef1d8",
   "tables": {
     "collaborators": {
       "name": "collaborators",
@@ -79,6 +79,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
         "folder_id": {
           "name": "folder_id",
           "type": "uuid",
@@ -109,10 +115,29 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
+        "files_workspace_id_workspaces_id_fk": {
+          "name": "files_workspace_id_workspaces_id_fk",
+          "tableFrom": "files",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "files_folder_id_folders_folder_id_fk": {
           "name": "files_folder_id_folders_folder_id_fk",
           "tableFrom": "files",
@@ -168,6 +193,12 @@
         },
         "data": {
           "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -276,6 +307,12 @@
         },
         "data": {
           "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "in_trash": {
+          "name": "in_trash",
           "type": "text",
           "primaryKey": false,
           "notNull": false

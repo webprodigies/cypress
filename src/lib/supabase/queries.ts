@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, isNull, ne, notExists, or } from 'drizzle-orm';
+import { and, eq, ilike, isNull, ne, notExists, or } from 'drizzle-orm';
 import {
   collaborators,
   files,
@@ -9,7 +9,7 @@ import {
   workspaces,
 } from '../../../migrations/schema';
 import db from './db';
-import { File, Folder, workspace } from './supabase.types';
+import { File, Folder, Profile, workspace } from './supabase.types';
 import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
 
@@ -43,21 +43,32 @@ export const getPrivateWorkspaces = async (userId: string | null) => {
   return privateWorkspaces;
 };
 
-export const createPrivateWorkspace = async ({
-  iconId,
-  workspaceOwner,
-  title,
-}: {
-  iconId: string;
-  workspaceOwner: string;
-  title: string;
-}) => {
-  if (iconId && workspaceOwner) {
-    const response = await db
-      .insert(workspaces)
-      .values({ id: randomUUID(), workspaceOwner, iconId, title });
-    return response;
-  }
+export const createWorkspace = async (workspace: workspace) => {
+  const response = await db.insert(workspaces).values(workspace);
+  return response;
+};
+
+export const addCollaborators = async (
+  profiles: Profile[],
+  workspaceId: string
+) => {
+  const response = profiles.forEach(async (profile: Profile) => {
+    await db.insert(collaborators).values({ workspaceId, userId: profile.id });
+  });
+  return response;
+};
+
+export const getProfiles = async (
+  email: string,
+  userEmail: string | undefined
+) => {
+  console.log(email, userEmail);
+  if (!email || !userEmail) return [];
+  const accounts = db
+    .select()
+    .from(profiles)
+    .where(ilike(profiles.email, `${email}%`));
+  return accounts;
 };
 
 //These are the workspaces the user is collaborating on
@@ -178,7 +189,6 @@ export const updateEmojiFolder = async (folderId: string, emoji: string) => {
 };
 
 export const updateEmojiFile = async (fileId: string, emoji: string) => {
-  console.log(fileId, emoji);
   const response = await db
     .update(files)
     .set({ iconId: emoji ? emoji : '📋' })

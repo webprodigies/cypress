@@ -1,1 +1,0 @@
-ALTER TABLE "files" ADD PRIMARY KEY ("id");

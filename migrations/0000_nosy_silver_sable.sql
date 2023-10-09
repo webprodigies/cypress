@@ -54,12 +54,14 @@ CREATE TABLE IF NOT EXISTS "collaborators" (
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "files" (
-	"id" uuid DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"workspace_id" uuid NOT NULL,
 	"folder_id" uuid NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"title" text NOT NULL,
 	"icon_id" text NOT NULL,
-	"blocks" json DEFAULT '{"blocks":[]}'::json NOT NULL
+	"data" text,
+	"in_trash" text
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "folders" (
@@ -68,7 +70,8 @@ CREATE TABLE IF NOT EXISTS "folders" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"title" text NOT NULL,
 	"icon_id" text NOT NULL,
-	"blocks" json DEFAULT '{"blocks":[]}'::json NOT NULL
+	"data" text,
+	"in_trash" text
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "profiles" (
@@ -86,7 +89,8 @@ CREATE TABLE IF NOT EXISTS "workspaces" (
 	"workspace_owner" uuid NOT NULL,
 	"title" text NOT NULL,
 	"icon_id" text NOT NULL,
-	"blocks" json DEFAULT '{"blocks":[]}'::json
+	"data" text,
+	"in_trash" text
 );
 --> statement-breakpoint
 DO $$ BEGIN
@@ -97,6 +101,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "collaborators" ADD CONSTRAINT "collaborators_user_id_profiles_id_fk" FOREIGN KEY ("user_id") REFERENCES "profiles"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "files" ADD CONSTRAINT "files_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "workspaces"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

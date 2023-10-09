@@ -21,10 +21,9 @@ const File = async ({ params }: { params: { fileId: string } }) => {
   return (
     <div className="relative ">
       <QuillEditor
-        defaultValue={response[0]?.data}
         dirType="file"
         fileId={params.fileId}
-        icon={response[0]?.iconId}
+        dirDetails={response[0] || {}}
       ></QuillEditor>
     </div>
   );

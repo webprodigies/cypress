@@ -226,12 +226,10 @@ export type CollaboratedWorkspace = {
 
 export type workspace = InferSelectModel<typeof workspaces>;
 export type testType = workspace & { iconId: 'perrin' | 'something' };
-export type profiles = InferSelectModel<typeof profiles>;
+export type Profile = InferSelectModel<typeof profiles>;
 export type Folder = InferSelectModel<typeof folders>;
 export type File = InferSelectModel<typeof files>;
 
-
 export type AddWorkspaceCollaborator = {
   userId: string;
-  workspaceId: string;
 };

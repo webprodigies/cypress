@@ -27,14 +27,13 @@ const CustomDialogTrigger: React.FC<customDialogTriggerProps> = ({
 }) => {
   return (
     <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogTrigger>{children}</DialogTrigger>
+      <DialogContent className="h-screen sm:h-[440px] overflow-scroll w-full ">
         <DialogHeader>
           <DialogTitle>{header}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {content}
-        <DialogFooter>{footer}</DialogFooter>
       </DialogContent>
     </Dialog>
   );
