@@ -19,6 +19,7 @@ export const workspaces = pgTable("workspaces", {
 	iconId: text("icon_id").notNull(),
 	data: text("data"),
 	inTrash: text("in_trash"),
+	logo: text("logo"),
 });
 
 export const profiles = pgTable("profiles", {
@@ -48,7 +49,7 @@ export const files = pgTable("files", {
 	iconId: text("icon_id").notNull(),
 	data: text("data"),
 	inTrash: text("in_trash"),
-	workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "cascade" } ),
+	workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" } ),
 });
 
 export const collaborators = pgTable("collaborators", {

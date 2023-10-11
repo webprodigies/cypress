@@ -1,6 +1,5 @@
 import React from 'react';
 import { ModeToggle } from '../modeToggle';
-import Avatar from '../../../public/avatars/4.png';
 import Image from 'next/image';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
@@ -9,6 +8,8 @@ import { profiles } from '../../../migrations/schema';
 import { eq } from 'drizzle-orm';
 import LogoutButton from '../logoutButton';
 import { LogOut } from 'lucide-react';
+import { AvatarFallback, AvatarImage, Avatar } from '../ui/avatar';
+import CypressProfileIcon from '../icons/cypressProfileIcon';
 const UserCard = async () => {
   const supabase = createServerComponentClient({ cookies });
   const {
@@ -17,23 +18,37 @@ const UserCard = async () => {
 
   if (!user) return;
 
-  const profile = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, user?.id));
+  const response = await db.query.profiles.findFirst({
+    where: (p, { eq }) => eq(p.id, user.id),
+  });
+  let avatarPath;
+  if (!response) return;
+  if (!response.avatarUrl) avatarPath = '';
+  else {
+    avatarPath = supabase.storage
+      .from('avatars')
+      .getPublicUrl(response.avatarUrl)?.data.publicUrl;
+  }
+
+  const profile = {
+    ...response,
+    avatarUrl: avatarPath,
+  };
 
   return (
-    <article className="cursor-pointer flex justify-between items-center px-4 py-2 dark:bg-Neutrals-12 rounded-3xl">
+    <article className="hidden sm:flex cursor-pointer justify-between items-center px-4 py-2 dark:bg-Neutrals-12 rounded-3xl">
       <aside className="flex justify-center items-center gap-2">
-        <Image
-          src={Avatar}
-          alt="avatar logo"
-          className="rounded-full w-6 h-6"
-        />
+        <Avatar className="w-8 h-8">
+          <AvatarImage src={profile.avatarUrl} />
+          <AvatarFallback>
+            <CypressProfileIcon />
+          </AvatarFallback>
+        </Avatar>
+
         <div className="flex flex-col">
           <span className="text-muted-foreground">Free Plan</span>
           <small className="w-[100px] overflow-hidden overflow-ellipsis">
-            {profile[0].email}
+            {profile.email}
           </small>
         </div>
       </aside>

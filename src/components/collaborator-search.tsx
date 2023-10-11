@@ -82,12 +82,12 @@ const CollaboratorSearch: FC<CollaboratorSearchProps> = ({
           <Search />
           <Input
             name="name"
-            className=" h-2 bg-white dark:bg-background"
+            className=" h-2 dark:bg-background"
             placeholder="Email"
             onChange={onChangeHandler}
           />
         </div>
-        <ScrollArea className="h-[120px] overflow-y-scroll w-full rounded-md ">
+        <ScrollArea className="mt-6 overflow-y-scroll w-full rounded-md ">
           {searchResults
             .filter(
               (result) =>

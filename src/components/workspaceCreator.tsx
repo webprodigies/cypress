@@ -35,7 +35,6 @@ type workspace, folder and file
 */
 
 const WorkspaceCreator: React.FC<WorkspaceCreatorProps> = () => {
-  const { toast } = useToast();
   const [permission, setPermissions] = useState<string>('private');
   const [title, setTitle] = useState<string>('');
   const [collaborators, setCollaborators] = useState<Profile[]>([]);
@@ -64,6 +63,7 @@ const WorkspaceCreator: React.FC<WorkspaceCreatorProps> = () => {
         inTrash: '',
         title,
         workspaceOwner: user.id,
+        logo: null,
       };
       if (permission === 'private') {
         await createWorkspace(newWorkspace);

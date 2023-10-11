@@ -14,6 +14,7 @@ const Workspace = async ({ params }: { params: { workspaceId: string } }) => {
     .where(eq(workspaces.id, params.workspaceId))
     .limit(1)) as workspace[];
 
+
   return (
     <div className="relative ">
       <QuillEditor
