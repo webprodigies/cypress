@@ -15,7 +15,9 @@ import { getFiles } from '../supabase/queries';
 import { folders } from '../supabase/schema';
 
 export type appFoldersType = Folder & { files: File[] | [] };
-export type appWorkspacesType = workspace & { folders: appFoldersType[] | [] };
+export type appWorkspacesType = workspace & {
+  folders: appFoldersType[] | [];
+};
 
 export interface AppState {
   workspaces: appWorkspacesType[] | [];

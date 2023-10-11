@@ -5,6 +5,7 @@ import { DM_Sans } from 'next/font/google';
 import { twMerge } from 'tailwind-merge';
 import { SocketProvider } from '@/lib/providers/socket-provider';
 import { AppStateProvider } from '@/lib/providers/state-provider';
+import { SettingsProvider } from '@/lib/providers/settings-provider';
 
 const inter = DM_Sans({ subsets: ['latin'] });
 
@@ -20,7 +21,7 @@ export default function RootLayout({
 }) {
   //CHALLENGE Files keep reseting when we change between workspaces.
   //CHALLENGE How to cache
-  // WHEN YOU trash a folder files are also trashed but now when you try to 
+  // WHEN YOU trash a folder files are also trashed but now when you try to
   // CHALLENGE WHEN SOMEONE IS ADDED AS A WORKSPACE COLLABORATOR THEN you need to create the real time feature.
   return (
     <html lang="en">
@@ -31,7 +32,9 @@ export default function RootLayout({
           enableSystem
         >
           <AppStateProvider>
-            <SocketProvider>{children}</SocketProvider>
+            <SettingsProvider>
+              <SocketProvider>{children}</SocketProvider>
+            </SettingsProvider>
           </AppStateProvider>
         </ThemeProvider>
       </body>

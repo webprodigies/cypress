@@ -246,8 +246,6 @@ export function Dropdown({
             ) : (
               <div className="relative">
                 <EmojiPicker
-                  dropdownId={id}
-                  type={listType}
                   getValue={changeEmoji}
                 >
                   {iconId}

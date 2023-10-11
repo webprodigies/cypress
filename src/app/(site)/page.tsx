@@ -142,7 +142,7 @@ export default async function Home() {
           subheading="Experience all the benefits of our platform. Select a plan that suits your needs and take your productivity to new heights."
           pill="Pricing"
         />
-        <div className="flex gap-4 justify-center mt-10">
+        <div className="flex flex-col-reverse sm:flex-row gap-4 justify-center  sm:items-stretch items-center mt-10">
           {PRICING_CARDS.map((card) => (
             <CustomCard
               className={clsx(

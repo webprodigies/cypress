@@ -66,6 +66,7 @@ export const workspaces = pgTable('workspaces', {
   iconId: text('icon_id').notNull(),
   data: text('data'),
   inTrash: text('in_trash'),
+  logo: text('logo'),
 });
 
 export const profiles = pgTable('profiles', {

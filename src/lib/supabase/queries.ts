@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, ilike, isNull, ne, notExists, or } from 'drizzle-orm';
+import { and, eq, ilike, notExists } from 'drizzle-orm';
 import {
   collaborators,
   files,
@@ -10,7 +10,6 @@ import {
 } from '../../../migrations/schema';
 import db from './db';
 import { File, Folder, Profile, workspace } from './supabase.types';
-import { randomUUID } from 'crypto';
 import { revalidatePath } from 'next/cache';
 
 export const getPrivateWorkspaces = async (userId: string | null) => {
@@ -26,6 +25,7 @@ export const getPrivateWorkspaces = async (userId: string | null) => {
       iconId: workspaces.iconId,
       data: workspaces.data,
       inTrash: workspaces.inTrash,
+      logo: workspaces.logo,
     })
     .from(workspaces)
     .where(
@@ -48,21 +48,81 @@ export const createWorkspace = async (workspace: workspace) => {
   return response;
 };
 
+export const updateWorkspace = async (
+  updatedWorkspace: Partial<workspace>,
+  workspaceId: string
+) => {
+  if (!workspaceId) return;
+  await db
+    .update(workspaces)
+    .set(updatedWorkspace)
+    .where(eq(workspaces.id, workspaceId));
+  revalidatePath(`/dashboard/${workspaceId}`);
+};
+
 export const addCollaborators = async (
   profiles: Profile[],
   workspaceId: string
 ) => {
   const response = profiles.forEach(async (profile: Profile) => {
-    await db.insert(collaborators).values({ workspaceId, userId: profile.id });
+    const userExists = await db.query.collaborators.findFirst({
+      where: (p, { eq }) =>
+        and(eq(p.userId, profile.id), eq(p.workspaceId, workspaceId)),
+    });
+    if (!userExists)
+      await db
+        .insert(collaborators)
+        .values({ workspaceId, userId: profile.id });
   });
-  return response;
 };
 
+export const removeCollaborators = async (
+  profiles: Profile[],
+  workspaceId: string
+) => {
+  const response = profiles.forEach(async (profile: Profile) => {
+    const userExists = await db.query.collaborators.findFirst({
+      where: (p, { eq }) =>
+        and(eq(p.userId, profile.id), eq(p.workspaceId, workspaceId)),
+    });
+    if (userExists)
+      await db
+        .delete(collaborators)
+        .where(
+          and(
+            eq(collaborators.workspaceId, workspaceId),
+            eq(collaborators.userId, profile.id)
+          )
+        );
+  });
+};
+
+export const getCollaborators = async (
+  workspaceId: string
+): Promise<Profile[]> => {
+  const response = await db
+    .select()
+    .from(collaborators)
+    .where(eq(collaborators.workspaceId, workspaceId));
+
+  if (!response.length) return [];
+
+  const usersInformation: Promise<Profile | undefined>[] = response.map(
+    async (user) => {
+      const exists = await db.query.profiles.findFirst({
+        where: (p, { eq }) => eq(p.id, user.userId),
+      });
+      return exists;
+    }
+  );
+
+  const resolvedUsers = await Promise.all(usersInformation);
+  return resolvedUsers.filter(Boolean) as Profile[]; // Remove any null or undefined values
+};
 export const getProfiles = async (
   email: string,
   userEmail: string | undefined
 ) => {
-  console.log(email, userEmail);
   if (!email || !userEmail) return [];
   const accounts = db
     .select()
@@ -71,6 +131,25 @@ export const getProfiles = async (
   return accounts;
 };
 
+export const findProfile = async (userId: string) => {
+  const response = await db.query.profiles.findFirst({
+    where: (p, { eq }) => eq(p.id, userId),
+  });
+
+  return response;
+};
+
+export const updateProfile = async (
+  profile: Partial<Profile>,
+  userId: string
+) => {
+  if (!userId) return;
+  const response = await db
+    .update(profiles)
+    .set(profile)
+    .where(eq(profiles.id, userId));
+  return response;
+};
 //These are the workspaces the user is collaborating on
 export const getCollaboratingWorkspaces = async (userId: string) => {
   if (!userId) return [];
@@ -83,19 +162,19 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
       iconId: workspaces.iconId,
       data: workspaces.data,
       inTrash: workspaces.inTrash,
+      logo: workspaces.logo,
     })
     .from(profiles)
     .innerJoin(collaborators, eq(profiles.id, collaborators.userId))
     .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
     .where(eq(profiles.id, userId))) as [workspace];
-
   return collaboratedWorkspaces;
 };
 
 export const getSharedWorkspaces = async (userId: string) => {
   if (!userId) return [];
   const sharedWorkspaces = (await db
-    .select({
+    .selectDistinct({
       id: workspaces.id,
       createdAt: workspaces.createdAt,
       workspaceOwner: workspaces.workspaceOwner,
@@ -103,8 +182,10 @@ export const getSharedWorkspaces = async (userId: string) => {
       iconId: workspaces.iconId,
       data: workspaces.data,
       inTrash: workspaces.inTrash,
+      logo: workspaces.logo,
     })
     .from(workspaces)
+    .orderBy(workspaces.createdAt)
     .innerJoin(collaborators, eq(workspaces.id, collaborators.workspaceId))
     .where(eq(workspaces.workspaceOwner, userId))) as [workspace];
   return sharedWorkspaces;
@@ -312,15 +393,4 @@ export const updateFile = async (
 ) => {
   if (!fileId) return;
   await db.update(files).set(updatedFile).where(eq(files.id, fileId));
-};
-
-export const updateWorkspace = async (
-  updatedWorkspace: Partial<workspace>,
-  workspaceId: string
-) => {
-  if (!workspaceId) return;
-  await db
-    .update(workspaces)
-    .set(updatedWorkspace)
-    .where(eq(workspaces.id, workspaceId));
 };

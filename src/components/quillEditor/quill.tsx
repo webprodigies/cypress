@@ -14,6 +14,7 @@ import { useSocket } from '@/lib/providers/socket-provider';
 import {
   deleteFile,
   deleteFolder,
+  findProfile,
   getFileDetails,
   getFolderDetails,
   getWorkspaceDetails,
@@ -30,8 +31,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '../ui/button';
 import EmojiPicker from '../emoji-picker';
 import { useAppState } from '@/lib/providers/state-provider';
-import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
-import { useRouter } from 'next/navigation';
+import {
+  File,
+  Folder,
+  Profile,
+  workspace,
+} from '@/lib/supabase/supabase.types';
+import {
+  usePathname,
+  useRouter,
+  useSelectedLayoutSegment,
+  useSelectedLayoutSegments,
+} from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { AuthUser } from '@supabase/supabase-js';
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 
 var TOOLBAR_OPTIONS = [
   ['bold', 'italic', 'underline', 'strike'], // toggled buttons
@@ -69,7 +89,56 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [quill, setQuill] = useState<any>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [saving, setSaving] = useState(false);
+  const [cursor, setCursor] = useState<any>(null);
+  const [user, setUser] = useState<Profile>();
+  const [collaborators, setCollaborators] = useState<
+    { id: string; email: string; avatarUrl: string }[]
+  >([]);
   const router = useRouter();
+  const supabase = createClientComponentClient();
+  const pathname = usePathname();
+
+  const breadCrumbs = useMemo(() => {
+    if (!pathname || !state.workspaces || !workspaceId) return '';
+
+    const segments = pathname
+      .split('/')
+      .filter((val) => val !== 'dashboard' && val);
+
+    const workspaceDetails = state.workspaces.find(
+      (workspace) => workspace.id === workspaceId
+    );
+    const workspaceBreadCrumb = workspaceDetails
+      ? `${workspaceDetails.iconId} ${workspaceDetails.title}`
+      : '';
+
+    if (segments.length === 1) {
+      return workspaceBreadCrumb;
+    }
+
+    const folderSegment = segments[1];
+    const folderDetails = workspaceDetails?.folders.find(
+      (folder) => folder.folderId === folderSegment
+    );
+    const folderBreadCrumb = folderDetails
+      ? `/ ${folderDetails.iconId} ${folderDetails.title}`
+      : '';
+
+    if (segments.length === 2) {
+      return `${workspaceBreadCrumb} ${folderBreadCrumb}`;
+    }
+
+    const fileSegment = segments[2];
+    const fileDetails = folderDetails?.files.find(
+      (file) => file.id === fileSegment
+    );
+    const fileBreadCrumb = fileDetails
+      ? `/ ${fileDetails.iconId} ${fileDetails.title}`
+      : '';
+
+    return `${workspaceBreadCrumb} ${folderBreadCrumb} ${fileBreadCrumb}`;
+  }, [state, pathname, workspaceId]);
+
   const details = useMemo(() => {
     let selectedDir;
     if (dirType === 'file') {
@@ -157,7 +226,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     fetchInformation();
   }, [fileId, dirType, workspaceId, quill]);
 
-  //set the state in the app state if it does not exist already
+  //Creating the quill editor
   const wrapperRef = useCallback(async (wrapper: any) => {
     if (typeof window !== 'undefined') {
       if (wrapper === null) return;
@@ -165,10 +234,22 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       const editor = document.createElement('div');
       wrapper.append(editor);
       const Quill = (await import('quill')).default;
+      const QuillCursors = (await import('quill-cursors')).default;
+      Quill.register('modules/cursors', QuillCursors);
+
       const q = new Quill(editor, {
         theme: 'snow',
-        modules: { toolbar: TOOLBAR_OPTIONS },
+        modules: {
+          toolbar: TOOLBAR_OPTIONS,
+          cursors: {
+            transformOnTextChange: true,
+          },
+        },
       });
+      //WIP Cursors
+      // const cursorsOne = q.getModule('cursors');
+      // cursorsOne.createCursor('cursor', 'User 2', 'blue');
+      // setCursor(cursorsOne);
       setQuill(q);
     }
   }, []);
@@ -195,10 +276,65 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user: userData },
+      } = await supabase.auth.getUser();
+      if (userData) {
+        const response = await findProfile(userData.id);
+        if (response)
+          setUser({
+            ...response,
+            avatarUrl: response.avatarUrl
+              ? supabase.storage
+                  .from('avatars')
+                  .getPublicUrl(response.avatarUrl).data.publicUrl
+              : '',
+          });
+      }
+    };
+    getUser();
+  }, [supabase]);
+
+  //Real time user infomation
+  useEffect(() => {
+    if (!fileId) return;
+    const room = supabase.channel(fileId);
+    const subscription = room
+      .on('presence', { event: 'sync' }, () => {
+        const newState = room.presenceState();
+        const newCollaborators = Object.values(newState).flat() as any;
+
+        setCollaborators(newCollaborators);
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED' || !user) {
+          return;
+        }
+
+        room.track({
+          id: user?.id,
+          email: user?.email?.split('@')[0],
+          avatarUrl: user.avatarUrl,
+        });
+      });
+    return () => {
+      supabase.removeChannel(room);
+    };
+  }, [fileId, user]);
+
   //Send Changes for broadcasting to other clients
   useEffect(() => {
     if (quill === null || socket === null || !fileId || !dirType) return;
-    const quilHandler = (delta: any, oldDelta: any, source: any) => {
+    // const selectionChangeHandler = (cursor: any) => {
+    //   return (range: any, oldRange: any, source: any) => {
+    //     if (source === 'user') {
+    //       cursor.moveCursor('cursor', range);
+    //     } else cursor.moveCursor('cursor', range);
+    //   };
+    // };
+    const quillHandler = (delta: any, oldDelta: any, source: any) => {
       if (source !== 'user') return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       setSaving(true);
@@ -235,13 +371,14 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
       socket.emit('send-changes', delta, fileId);
     };
-    quill.on('text-change', quilHandler);
+    quill.on('text-change', quillHandler);
+    // quill.on('selection-change', selectionChangeHandler(cursor));
 
     return () => {
-      quill.off('text-change', quilHandler);
+      quill.off('text-change', quillHandler);
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [quill, socket, fileId, details]);
+  }, [quill, socket, fileId, details, cursor]);
 
   const restoreFileHandler = async () => {
     if (dirType === 'file') {
@@ -307,7 +444,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
   return (
     <>
-      <div className="relative ">
+      <div className="relative">
         {details.inTrash && (
           <article className="py-2 z-40 bg-[#EB5757] flex  md:flex-row flex-col justify-center items-center gap-4 flex-wrap">
             <div className="flex flex-col md:flex-row gap-2 justify-center items-center">
@@ -334,37 +471,61 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             <span className="text-sm text-white">{details.inTrash}</span>
           </article>
         )}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-between justify-center sm:items-center sm:p-2 p-8">
+          <div className="">{breadCrumbs}</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10 ">
+              {collaborators.map((collaborator, index) => (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar className="-ml-3 bg-background border-2 flex items-center justify-center border-white h-8 w-8 rounded-full">
+                        <AvatarImage
+                          src={
+                            collaborator.avatarUrl ? collaborator.avatarUrl : ''
+                          }
+                          className="rounded-full"
+                        />
+                        <AvatarFallback className="">
+                          {collaborator?.email?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>{collaborator.email}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+            {saving ? (
+              <Badge
+                variant="secondary"
+                className="bg-orange-600 top-4 text-white right-4 z-50"
+              >
+                Saving...
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-600 top-4 text-white right-4 z-50"
+              >
+                Saved
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="relative">
         <Image
           src={BannerImage}
-          className=" w-full md:h-48 h-20 object-cover "
-          alt="Folder Banner Image"
+          className=" w-full md:h-48 h-20 object-cover"
+          alt="Banner Image"
         />
-
-        {saving ? (
-          <Badge
-            variant="secondary"
-            className="bg-orange-600 absolute top-4 text-white right-4 z-50"
-          >
-            Saving...
-          </Badge>
-        ) : (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-600 absolute top-4 text-white right-4 z-50"
-          >
-            Saved
-          </Badge>
-        )}
       </div>
 
       <div className="flex justify-center items-center flex-col mt-2 relative ">
         <div className=" w-full self-center max-w-[800px] flex flex-col px-7 lg:my-8">
           <div className="text-[80px]">
-            <EmojiPicker
-              dropdownId={fileId}
-              type={dirType}
-              getValue={iconOnChange}
-            >
+            <EmojiPicker getValue={iconOnChange}>
               <div className="w-[100px] cursor-pointer transition-colors h-[100px] flex items-center justify-center hover:bg-muted rounded-xl">
                 {details.iconId}
               </div>
