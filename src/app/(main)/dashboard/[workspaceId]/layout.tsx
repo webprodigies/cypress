@@ -1,6 +1,6 @@
 import MobileSidebar from '@/components/sidebar/mobile-sidebar';
 import Sidebar from '@/components/sidebar/sidebar';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface LayoutProps {
   children: React.ReactNode;

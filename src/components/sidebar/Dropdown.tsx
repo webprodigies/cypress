@@ -13,15 +13,12 @@ import { useMemo, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 
 import EmojiPicker from '../emoji-picker';
-import dynamic from 'next/dynamic';
 import {
   createFile,
   sendFileToTrash,
   sendFolderToTrash,
   updateEmojiFile,
   updateEmojiFolder,
-  updateFile,
-  updateFolder,
   updateTitleFile,
   updateTitleFolder,
 } from '@/lib/supabase/queries';
@@ -55,6 +52,7 @@ export function Dropdown({
   const router = useRouter();
   const pathname = usePathname();
 
+
   const folderTitle: string | undefined = useMemo(() => {
     if (listType === 'folder') {
       const stateTitle = state.workspaces
@@ -78,8 +76,8 @@ export function Dropdown({
     }
   }, [state, listType]);
 
-  //WIP
   const navigatePage = (accordianId: string, type: string) => {
+
     if (!pathname) return;
     const [workspaceId] = pathname.split('/dashboard/')[1].split('/');
 
@@ -177,7 +175,7 @@ export function Dropdown({
     }
   };
 
-  //WIP
+  
   const moveToTrash = async () => {
     const user = await supabase.auth.getUser();
     const pathId = id.split('folder');

@@ -53,7 +53,6 @@ const CollaboratorSearch: FC<CollaboratorSearchProps> = ({
     if (timerRef) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       const res = await getProfiles(e.target.value, user?.email);
-      console.log(res);
       setSearchResults(res);
     }, 450);
   };

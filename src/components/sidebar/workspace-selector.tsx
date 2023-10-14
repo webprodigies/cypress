@@ -52,6 +52,7 @@ const WorkspaceSelector: FC<WorkspaceSelectorProps> = ({
       collaboratingWorkspaces
     );
   }, [state]);
+
   useEffect(() => {
     const findSelectedWorkspace = state.workspaces.find(
       (workspace) => workspace.id === defaultValue?.id
@@ -74,39 +75,51 @@ const WorkspaceSelector: FC<WorkspaceSelectorProps> = ({
         <div className="origin-top-right absolute  w-full rounded-md shadow-md z-50 h-[190px] bg-black/10 backdrop-blur-lg group overflow-scroll border-[1px] border-muted">
           <div className="rounded-md flex flex-col">
             <div className=" !p-2">
-              <p className="text-muted-foreground">Private</p>
-              <hr />
-              {privateWorkspaces.map((option) => (
-                <SelectedWorkspace
-                  key={option.id}
-                  workspace={option}
-                  onClick={() => {
-                    handleSelect(option);
-                  }}
-                />
-              ))}
-              <p className="text-muted-foreground">Shared</p>
-              <hr />
-              {sharedWorkspaces.map((option) => (
-                <SelectedWorkspace
-                  key={option.id}
-                  workspace={option}
-                  onClick={() => {
-                    handleSelect(option);
-                  }}
-                />
-              ))}
-              <p className="text-muted-foreground">Collaborating</p>
-              <hr />
-              {collaboratingWorkspaces.map((option) => (
-                <SelectedWorkspace
-                  key={option.id}
-                  workspace={option}
-                  onClick={() => {
-                    handleSelect(option);
-                  }}
-                />
-              ))}
+              {!!privateWorkspaces.length && (
+                <>
+                  <p className="text-muted-foreground">Private</p>
+                  <hr />
+                  {privateWorkspaces.map((option) => (
+                    <SelectedWorkspace
+                      key={option.id}
+                      workspace={option}
+                      onClick={() => {
+                        handleSelect(option);
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+              {!!sharedWorkspaces.length && (
+                <>
+                  <p className="text-muted-foreground">Shared</p>
+                  <hr />
+                  {sharedWorkspaces.map((option) => (
+                    <SelectedWorkspace
+                      key={option.id}
+                      workspace={option}
+                      onClick={() => {
+                        handleSelect(option);
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+              {!!collaboratingWorkspaces.length && (
+                <>
+                  <p className="text-muted-foreground">Collaborating</p>
+                  <hr />
+                  {collaboratingWorkspaces.map((option) => (
+                    <SelectedWorkspace
+                      key={option.id}
+                      workspace={option}
+                      onClick={() => {
+                        handleSelect(option);
+                      }}
+                    />
+                  ))}
+                </>
+              )}
             </div>
             <CustomDialogTrigger
               header="Create A Workspace"

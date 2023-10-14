@@ -5,6 +5,7 @@ import { AuthUser } from '@supabase/supabase-js';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 import { Button } from './ui/button';
+import { useAppState } from '@/lib/providers/state-provider';
 
 interface LogoutButtonProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface LogoutButtonProps {
 
 const LogoutButton: React.FC<LogoutButtonProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser>();
+  const { dispatch } = useAppState();
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -32,6 +34,7 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ children }) => {
 
   const logoutUser = async () => {
     await supabase.auth.signOut();
+    dispatch({ type: 'SET_WORKSPACES', payload: [] });
     router.refresh();
   };
 
@@ -39,7 +42,7 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ children }) => {
     <Button
       variant="ghost"
       size="icon"
-      className='p-0'
+      className="p-0"
       onClick={logoutUser}
     >
       {children}

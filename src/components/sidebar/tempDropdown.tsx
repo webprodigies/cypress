@@ -3,12 +3,13 @@ import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import ClientAccordian from './clientAccordian';
 import { Dropdown } from './Dropdown';
-import { AppState, useAppState } from '@/lib/providers/state-provider';
+import { useAppState } from '@/lib/providers/state-provider';
 import TooltipComponent from '../tooltip';
 import { PlusIcon } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
 import { createFolder } from '@/lib/supabase/queries';
 import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
+import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
 
 interface TempDropdownProps {
   workspaceFolders: Folder[];
@@ -21,8 +22,9 @@ const TempDropdown: FC<TempDropdownProps> = ({
 }) => {
   useSupabaseRealtime();
   const { state, dispatch } = useAppState();
+  const { setOpen, subscription } = useSubscriptionModal();
   // Use a local state variable to track whether to use server data or local state
-  const [useServerData, setUseServerData] = useState(true);
+  const [folders, setFolders] = useState(workspaceFolders);
 
   // Set initial state based on server data when it's available
   useEffect(() => {
@@ -43,24 +45,24 @@ const TempDropdown: FC<TempDropdownProps> = ({
       });
 
       // Update the local state variable to indicate that server data has been used
-      setUseServerData(false);
     }
   }, [workspaceFolders, workspaceId]);
 
-  // Define folders based on whether to use server data or local state
-  const folders = useMemo(() => {
-    if (useServerData) {
-      return workspaceFolders;
-    } else {
-      const stateWorkspaceFolders =
-        state.workspaces.find((workspace) => workspace.id === workspaceId)
-          ?.folders || [];
+  useEffect(() => {
+    setFolders(
+      state.workspaces.find((workspace) => workspace.id === workspaceId)
+        ?.folders || []
+    );
+  }, [state]);
 
-      return stateWorkspaceFolders;
-    }
-  }, [state, workspaceFolders, workspaceId, useServerData]);
+  // Define folders based on whether to use server data or local state
 
   const addFolderHandler = async () => {
+    if (folders.length >= 3 && !subscription) {
+      setOpen(true);
+      return;
+    }
+
     const newFolder: Folder = {
       data: null,
       folderId: uuid(),
@@ -79,7 +81,7 @@ const TempDropdown: FC<TempDropdownProps> = ({
 
   return (
     <>
-      <div className="flex sticky z-50 top-0 bg-background w-full  h-10 group/title justify-between items-center pr-4 text-Neutrals-8">
+      <div className="flex sticky z-20 top-0 bg-background w-full  h-10 group/title justify-between items-center pr-4 text-Neutrals-8">
         <span className="text-Neutrals-8 font-bold text-xs">FOLDERS</span>
         <TooltipComponent message="Create Folder">
           <PlusIcon

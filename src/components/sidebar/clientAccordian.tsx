@@ -10,7 +10,6 @@ interface ClientAccordianProps {
 
 const ClientAccordian: FC<ClientAccordianProps> = ({ children, className }) => {
   const pathname = usePathname();
-  // router.refresh();
   return (
     <Accordion
       defaultValue={pathname?.split('/dashboard/')[1].split('/')}
