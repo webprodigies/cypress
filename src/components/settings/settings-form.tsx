@@ -19,6 +19,7 @@ import {
   CreditCard,
   ExternalLink,
   Lock,
+  LogOut,
   Plus,
   Share,
   User,
@@ -40,21 +41,28 @@ import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { v4 } from 'uuid';
-import PlanUsage from '../sidebar/planUsage';
 import Link from 'next/link';
 import { useAppState } from '@/lib/providers/state-provider';
 import {
   addCollaborators,
+  deleteWorkspace,
   findProfile,
   getCollaborators,
   removeCollaborators,
   updateProfile,
   updateWorkspace,
 } from '@/lib/supabase/queries';
-import Image from 'next/image';
 import CypressProfileIcon from '../icons/cypressProfileIcon';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { useToast } from '../ui/use-toast';
+import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
+import LogoutButton from '../logoutButton';
+import { postData } from '@/lib/util/helpers';
 
 const SettingsForm = () => {
+  const { setOpen, subscription } = useSubscriptionModal();
+
+  const { toast } = useToast();
   const { state, workspaceId, dispatch } = useAppState();
   const [permission, setPermissions] = useState<string>('Private');
   const [collaborators, setCollaborators] = useState<Profile[] | []>([]);
@@ -66,11 +74,17 @@ const SettingsForm = () => {
   const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   const addCollaborator = async (profile: Profile) => {
     if (!workspaceId) return;
+    if (subscription?.status !== 'active' && collaborators.length >= 2) {
+      setOpen(true);
+      return;
+    }
     await addCollaborators([profile], workspaceId);
     setCollaborators([...collaborators, profile]);
+    //to refresh our workspace categories
     router.refresh();
   };
 
@@ -147,6 +161,7 @@ const SettingsForm = () => {
     if (!user) return;
     const file = e.target.files?.[0];
     if (!file) return;
+
     setUploadingProfilePic(true);
     const uuid = v4();
     const { data, error } = await supabase.storage
@@ -181,7 +196,6 @@ const SettingsForm = () => {
           ? supabase.storage.from('avatars').getPublicUrl(userInfo.avatarUrl)
               ?.data.publicUrl
           : null;
-        console.log('AVATAR URL', avatarUrl);
         if (userInfo) setUser({ ...userInfo, avatarUrl });
       }
     };
@@ -210,6 +224,19 @@ const SettingsForm = () => {
     };
     fetchCollaborators();
   }, [workspaceId]);
+
+  const redirectToCustomerPortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const { url, error } = await postData({
+        url: '/api/create-portal-link',
+      });
+      window.location.assign(url);
+    } catch (error) {
+      if (error) console.log(error);
+    }
+    setLoadingPortal(false);
+  };
 
   return (
     <div className="flex gap-4 flex-col">
@@ -245,10 +272,15 @@ const SettingsForm = () => {
           type="file"
           accept="image/*"
           className="bg-background"
-          placeholder="Workspace Name"
+          placeholder="Workspace Logo"
           onChange={onChangeworkspaceLogo}
-          disabled={uploadingLogo}
+          disabled={uploadingLogo || subscription?.status !== 'active'}
         />
+        {subscription?.status !== 'active' && (
+          <small className="text-muted-foreground">
+            To customize your workspace, you need to be on a Pro Plan
+          </small>
+        )}
       </div>
       <>
         <label
@@ -363,6 +395,28 @@ const SettingsForm = () => {
         </div>
       )}
 
+      <Alert variant="destructive">
+        <AlertDescription>
+          Warning! deleting you workspace will permanantly delete all data
+          related to this workspace.
+        </AlertDescription>
+        <Button
+          type="submit"
+          size="sm"
+          variant={'destructive'}
+          className="mt-4 text-sm bg-destructive/40 border-2 border-destructive"
+          onClick={async () => {
+            if (workspaceId) await deleteWorkspace(workspaceId);
+            toast({
+              title: 'Successfully deleted your workspae',
+            });
+            router.replace('/dashboard');
+          }}
+        >
+          Delete Workspace
+        </Button>
+      </Alert>
+
       <p className="flex items-center gap-2  mt-6">
         <User size={20} /> Profile
       </p>
@@ -384,7 +438,6 @@ const SettingsForm = () => {
           >
             Profile Picture
           </label>
-
           <Input
             name="profilePicture"
             type="file"
@@ -397,12 +450,19 @@ const SettingsForm = () => {
         </div>
       </div>
 
+      <LogoutButton>
+        <div className="flex items-center ">
+          <LogOut />
+        </div>
+      </LogoutButton>
       <p className="flex items-center gap-2 mt-6">
         <CreditCard size={20} /> Billing & Plan
       </p>
       <Separator />
-      <PlanUsage />
-      <p className="text-muted-foreground">You are currently on a Free Plan</p>
+      <p className="text-muted-foreground">
+        You are currently on a{' '}
+        {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
+      </p>
       <Link
         href="/"
         target="_blank"
@@ -410,16 +470,35 @@ const SettingsForm = () => {
       >
         View Plans <ExternalLink size={16} />
       </Link>
-      <div>
-        <Button
-          type="submit"
-          size="sm"
-          variant={'secondary'}
-          className="text-sm"
-        >
-          Manage Subscription
-        </Button>
-      </div>
+      {subscription?.status === 'active' ? (
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant={'secondary'}
+            disabled={loadingPortal}
+            className="text-sm"
+            onClick={redirectToCustomerPortal}
+          >
+            Manage Subscription
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant={'secondary'}
+            className="text-sm"
+            onClick={() => {
+              setOpen(true);
+            }}
+          >
+            Start Plan
+          </Button>
+        </div>
+      )}
+
       <AlertDialog open={openAlertMessage}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -12,7 +12,7 @@ const useSupabaseRealtime = () => {
 
   useEffect(() => {
     const channel = supabase
-      .channel('db-changes') 
+      .channel('db-changes')
       .on(
         'postgres_changes',
         {
@@ -22,6 +22,7 @@ const useSupabaseRealtime = () => {
         },
         async (payload) => {
           if (payload.eventType === 'INSERT') {
+            console.log('🟢 RECEIVED REAL TIME EVENT');
             const {
               folder_id: folderId,
               workspace_id: workspaceId,

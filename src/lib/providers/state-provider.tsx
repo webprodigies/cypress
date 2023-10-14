@@ -10,9 +10,9 @@ import {
   useReducer,
 } from 'react';
 import { File, Folder, workspace } from '../supabase/supabase.types';
-import { usePathname } from 'next/navigation';
+import { redirect, usePathname } from 'next/navigation';
 import { getFiles } from '../supabase/queries';
-import { folders } from '../supabase/schema';
+import { validate } from 'uuid';
 
 export type appFoldersType = Folder & { files: File[] | [] };
 export type appWorkspacesType = workspace & {
@@ -604,8 +604,8 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
     if (!folderId || !workspaceId) return;
 
     const fetchFiles = async () => {
-      const response = await getFiles(folderId);
-
+      const { data: response, error } = await getFiles(folderId);
+      if (error || !response) return;
       dispatch({
         type: 'SET_FILES',
         payload: { workspaceId, files: response, folderId },

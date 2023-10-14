@@ -1,16 +1,19 @@
 import React from 'react';
 import { ModeToggle } from '../modeToggle';
-import Image from 'next/image';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import db from '@/lib/supabase/db';
-import { profiles } from '../../../migrations/schema';
-import { eq } from 'drizzle-orm';
 import LogoutButton from '../logoutButton';
 import { LogOut } from 'lucide-react';
 import { AvatarFallback, AvatarImage, Avatar } from '../ui/avatar';
 import CypressProfileIcon from '../icons/cypressProfileIcon';
-const UserCard = async () => {
+import { Subscription } from '@/lib/supabase/supabase.types';
+
+interface UserCardProps {
+  subscription: Subscription | null;
+}
+
+const UserCard: React.FC<UserCardProps> = async ({ subscription }) => {
   const supabase = createServerComponentClient({ cookies });
   const {
     data: { user },
@@ -24,6 +27,7 @@ const UserCard = async () => {
   let avatarPath;
   if (!response) return;
   if (!response.avatarUrl) avatarPath = '';
+  
   else {
     avatarPath = supabase.storage
       .from('avatars')
@@ -46,7 +50,9 @@ const UserCard = async () => {
         </Avatar>
 
         <div className="flex flex-col">
-          <span className="text-muted-foreground">Free Plan</span>
+          <span className="text-muted-foreground">
+            {subscription?.status === 'active' ? 'Pro Plan' : 'Free Plan'}
+          </span>
           <small className="w-[100px] overflow-hidden overflow-ellipsis">
             {profile.email}
           </small>

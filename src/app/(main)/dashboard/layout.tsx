@@ -1,4 +1,5 @@
-import Sidebar from '@/components/sidebar/sidebar';
+import { SubscriptionModalProvider } from '@/lib/providers/subscription-modal-provider';
+import { getActiveProductsWithPrices } from '@/lib/supabase/queries';
 import React from 'react';
 
 interface LayoutProps {
@@ -16,10 +17,14 @@ search param is going to be outdates in this layout component because it is not 
 */
 
 const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
+  const { data: products, error } = await getActiveProductsWithPrices();
+  if (error) throw new Error();
+
   return (
-    <main className="flex overflow-hidden h-screen  ">
-      {/* {!params && <Sidebar />} */}
-      <div className="">{children}</div>
+    <main className="flex overflow-hidden h-screen">
+      <SubscriptionModalProvider products={products}>
+        {children}
+      </SubscriptionModalProvider>
     </main>
   );
 };

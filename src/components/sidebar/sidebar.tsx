@@ -7,6 +7,7 @@ import {
   getFolders,
   getPrivateWorkspaces,
   getSharedWorkspaces,
+  getUserSubscriptionStatus,
 } from '@/lib/supabase/queries';
 import { ScrollArea } from '../ui/scroll-area';
 import TempDropdown from './tempDropdown';
@@ -15,10 +16,12 @@ import PlanUsage from './planUsage';
 import UserCard from './userCard';
 import WorkspaceDropdown from './workspace-selector';
 import { twMerge } from 'tailwind-merge';
+import { redirect } from 'next/navigation';
 
 interface SidebarProps {
   params: { workspaceId: string };
   className?: string;
+
 }
 
 const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
@@ -27,17 +30,23 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const workspaceFolders = await getFolders(params.workspaceId);
   if (!user) return;
+
+  const { data: subscription, error: subscriptionError } =
+    await getUserSubscriptionStatus(user.id);
+
+  const { data: workspaceFolders, error } = await getFolders(
+    params.workspaceId
+  );
+
+  if (error || !workspaceFolders) redirect('/dashboard');
+
   const [privateWorkspaces, collaboratingWorkspaces, sharedWorkspaces] =
     await Promise.all([
       getPrivateWorkspaces(user.id),
       getCollaboratingWorkspaces(user.id),
       getSharedWorkspaces(user.id),
     ]);
-
-  //WIP rout the user back to dashboard root if the urls they entered were wrong
   return (
     <div
       className={twMerge(
@@ -56,7 +65,11 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
             ...sharedWorkspaces,
           ].find((workspace) => workspace.id === params.workspaceId)}
         />
-        <PlanUsage />
+        <PlanUsage
+          foldersLength={workspaceFolders.length}
+          subscription={subscription}
+        />
+
         <NativeNavigation myWorkspaceId={params.workspaceId} />
         <ScrollArea className="overflow-scroll relative h-[450px]">
           <div className="pointer-events-none w-full absolute bottom-0 h-20 bg-gradient-to-t from-background to-transparent z-40" />
@@ -66,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
           />
         </ScrollArea>
       </div>
-      <UserCard />
+      <UserCard subscription={subscription} />
     </div>
   );
 };

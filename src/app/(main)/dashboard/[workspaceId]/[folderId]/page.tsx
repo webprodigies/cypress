@@ -1,28 +1,20 @@
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
-import QuillEditor from '@/components/quillEditor/quill';
-import db from '@/lib/supabase/db';
-import { folders } from '@/lib/supabase/schema';
-import { Folder } from '@/lib/supabase/supabase.types';
-import { eq } from 'drizzle-orm';
 import React from 'react';
+import QuillEditor from '@/components/quillEditor/quill';
+import { getFolderDetails } from '@/lib/supabase/queries';
+import { redirect } from 'next/navigation';
 
 const Folder = async ({ params }: { params: { folderId: string } }) => {
-  const response = (await db
-    .select()
-    .from(folders)
-    .where(eq(folders.folderId, params.folderId))
-    .limit(1)) as Folder[];
-  console.log(response);
+  const { data, error } = await getFolderDetails(params.folderId);
+  if (error || !data.length) redirect('/dashboard');
 
   return (
     <div className="relative ">
       <QuillEditor
         dirType="folder"
         fileId={params.folderId}
-        dirDetails={response[0] || {}}
+        dirDetails={data[0] || {}}
       ></QuillEditor>
     </div>
   );
