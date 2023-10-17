@@ -4,7 +4,7 @@ import React, { FC, ReactNode, useEffect, useMemo, useState } from 'react';
 import { workspace } from '@/lib/supabase/supabase.types';
 import { useAppState } from '@/lib/providers/state-provider';
 import CustomDialogTrigger from '../customDialogTrigger';
-import WorkspaceCreator from '@/components/workspaceCreator';
+import WorkspaceCreator from '@/components/sidebar/workspaceCreator';
 import SelectedWorkspace from './selected-workspace';
 
 interface WorkspaceSelectorProps {

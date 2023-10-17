@@ -52,7 +52,7 @@ export function Dropdown({
   const router = useRouter();
   const pathname = usePathname();
 
-
+  //Getting the state folder title by default but then shwoign the local State Title when things hcange
   const folderTitle: string | undefined = useMemo(() => {
     if (listType === 'folder') {
       const stateTitle = state.workspaces
@@ -76,8 +76,8 @@ export function Dropdown({
     }
   }, [state, listType]);
 
+  //Navigate the user to the right page based on the id we selected
   const navigatePage = (accordianId: string, type: string) => {
-
     if (!pathname) return;
     const [workspaceId] = pathname.split('/dashboard/')[1].split('/');
 
@@ -112,10 +112,12 @@ export function Dropdown({
     await createFile(newFile);
   };
 
+  //When the user double clicks on the title of the directory they can change it.
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
 
+  //When the user clicks out of title it saves
   const handleBlur = async () => {
     //If it is a folder
     setIsEditing(false);
@@ -131,6 +133,7 @@ export function Dropdown({
     }
   };
 
+  //On change of the title we update everything
   const fileTitleChange = (e: any) => {
     const fileAndFolderId = id.split('folder');
     if (fileAndFolderId.length === 2 && fileAndFolderId[1]) {
@@ -145,6 +148,7 @@ export function Dropdown({
     }
   };
 
+  //On change of the title we update everything
   const folderTitleChange = (e: any) => {
     const folderId = id.split('folder');
     if (folderId.length === 1) {
@@ -155,6 +159,7 @@ export function Dropdown({
     }
   };
 
+  //Saving changes for the emoji.
   const changeEmoji = async (selectedEmoji: string) => {
     const pathId = id.split('folder');
     //folder
@@ -175,7 +180,7 @@ export function Dropdown({
     }
   };
 
-  
+  //When a file is deleted we send it to the trash we dont delete it fully.
   const moveToTrash = async () => {
     const user = await supabase.auth.getUser();
     const pathId = id.split('folder');
@@ -201,6 +206,7 @@ export function Dropdown({
     }
   };
 
+  //We need this to show either the folder type or the file type.
   const isFolder = listType === 'folder';
   const groupIdentifies = clsx(
     'dark:text-white whitespace-nowrap flex justify-between items-center w-full relative',
@@ -243,11 +249,7 @@ export function Dropdown({
               <div className="w-[14px]  flex items-center ">{customIcon}</div>
             ) : (
               <div className="relative">
-                <EmojiPicker
-                  getValue={changeEmoji}
-                >
-                  {iconId}
-                </EmojiPicker>
+                <EmojiPicker getValue={changeEmoji}>{iconId}</EmojiPicker>
               </div>
             )}
 

@@ -16,6 +16,8 @@ it is a shared layout. Instead is stays on the client un rendered and the new ro
 search param is going to be outdates in this layout component because it is not rerendered. 
 */
 
+//Putting the subscription modal Provider here because this part of the app gets access to the users and subscription information
+
 const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
   const { data: products, error } = await getActiveProductsWithPrices();
   if (error) throw new Error();

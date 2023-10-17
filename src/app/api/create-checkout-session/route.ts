@@ -7,21 +7,27 @@ import { getURL } from '@/lib/util/helpers';
 import { createOrRetrieveCustomer } from '@/lib/stripe/adminTasks';
 
 export async function POST(request: Request) {
+  // Extract and destructure relevant data from the incoming request
   const { price, quantity = 1, metadata = {} } = await request.json();
 
   try {
+    // Create a client for route handlers with provided cookies
     const supabase = createRouteHandlerClient({
       cookies,
     });
+
+    // Fetch user information from Supabase authentication
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Create or retrieve a customer in the Stripe system, associated with the user
     const customer = await createOrRetrieveCustomer({
       email: user?.email || '',
       uuid: user?.id || '',
     });
 
+    // Create a Stripe checkout session for subscription purchase
     const session = await stripe.checkout.sessions.create({
       //@ts-ignore
       payment_method_types: ['card'],
@@ -39,12 +45,14 @@ export async function POST(request: Request) {
         trial_from_plan: true,
         metadata,
       },
-      success_url: `${getURL()}/dashboard`,
-      cancel_url: `${getURL()}/dashboard`,
+      success_url: `${getURL()}/dashboard`, // Redirect URL on successful payment
+      cancel_url: `${getURL()}/dashboard`, // Redirect URL on payment cancellation
     });
 
+    // Respond with the session ID for the client to initiate the Stripe checkout
     return NextResponse.json({ sessionId: session.id });
   } catch (err: any) {
+    // Log any errors and respond with an internal server error if encountered
     console.log(err);
     return new NextResponse('Internal Error', { status: 500 });
   }

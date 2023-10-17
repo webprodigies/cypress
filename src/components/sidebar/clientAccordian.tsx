@@ -7,7 +7,7 @@ interface ClientAccordianProps {
   children: ReactNode;
   className?: string;
 }
-
+// A simple container component that will wrap the children and also set its default value.
 const ClientAccordian: FC<ClientAccordianProps> = ({ children, className }) => {
   const pathname = usePathname();
   return (

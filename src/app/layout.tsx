@@ -23,11 +23,15 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // CHALLENGE Files keep reseting when we change between workspaces.
-  // CHALLENGE Real time workspaces
-  // CHALLENGE WHEN YOU trash a folder files are also trashed but now when you try to
-  // CHALLENGE WHEN SOMEONE IS ADDED AS A WORKSPACE COLLABORATOR THEN you need to create the real time feature.
-  // CHALLENGE Include number of collaborators in Plan Usage
+/**
+ * CHALLENGES 
+  1 Files keep reseting when we change between workspaces.
+  2 Real time workspaces
+  3 WHEN YOU trash a folder files are also trashed but now when you try to
+  4 WHEN SOMEONE IS ADDED AS A WORKSPACE COLLABORATOR THEN you need to create the real time feature.
+  5 Include number of collaborators in Plan Usage
+ */
+  
 
   return (
     <html lang="en">

@@ -15,14 +15,14 @@ const CypressPageIcon: FC<CypressPageIconProps> = () => {
         className={`dark:fill-[#2B2939] fill-[#D3D3D3] text-xl transition-all group-hover/native:fill-washed-purple-400`}
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M7 11C7 10.4477 7.44772 10 8 10H16C16.5523 10 17 10.4477 17 11C17 11.5523 16.5523 12 16 12H8C7.44772 12 7 11.5523 7 11Z"
         className={`dark:fill-[#817EB5]  fill-Neutrals-7 transition-all group-hover/native:fill-washed-blue-500`}
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M7 15C7 14.4477 7.44772 14 8 14H12C12.5523 14 13 14.4477 13 15C13 15.5523 12.5523 16 12 16H8C7.44772 16 7 15.5523 7 15Z"
         className={`dark:fill-[#817EB5]  fill-Neutrals-7 transition-all group-hover/native:fill-washed-blue-500`}
       />
