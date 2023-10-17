@@ -78,6 +78,7 @@ export interface Database {
       };
       files: {
         Row: {
+          banner_url: string | null;
           created_at: string;
           data: string | null;
           folder_id: string;
@@ -88,6 +89,7 @@ export interface Database {
           workspace_id: string;
         };
         Insert: {
+          banner_url?: string | null;
           created_at?: string;
           data?: string | null;
           folder_id: string;
@@ -98,6 +100,7 @@ export interface Database {
           workspace_id: string;
         };
         Update: {
+          banner_url?: string | null;
           created_at?: string;
           data?: string | null;
           folder_id?: string;
@@ -124,6 +127,7 @@ export interface Database {
       };
       folders: {
         Row: {
+          banner_url: string | null;
           created_at: string;
           data: string | null;
           folder_id: string;
@@ -133,6 +137,7 @@ export interface Database {
           workspace_id: string;
         };
         Insert: {
+          banner_url?: string | null;
           created_at?: string;
           data?: string | null;
           folder_id?: string;
@@ -142,6 +147,7 @@ export interface Database {
           workspace_id: string;
         };
         Update: {
+          banner_url?: string | null;
           created_at?: string;
           data?: string | null;
           folder_id?: string;
@@ -353,6 +359,7 @@ export interface Database {
       };
       workspaces: {
         Row: {
+          banner_url: string | null;
           created_at: string | null;
           data: string | null;
           icon_id: string;
@@ -363,6 +370,7 @@ export interface Database {
           workspace_owner: string;
         };
         Insert: {
+          banner_url?: string | null;
           created_at?: string | null;
           data?: string | null;
           icon_id: string;
@@ -373,6 +381,7 @@ export interface Database {
           workspace_owner: string;
         };
         Update: {
+          banner_url?: string | null;
           created_at?: string | null;
           data?: string | null;
           icon_id?: string;

@@ -9,6 +9,7 @@ import {
   manageSubscriptionStatusChange,
 } from '@/lib/stripe/adminTasks';
 
+// Define relevant Stripe webhook events to process
 const relevantEvents = new Set([
   'product.created',
   'product.updated',
@@ -21,21 +22,28 @@ const relevantEvents = new Set([
 ]);
 
 export async function POST(request: NextRequest) {
+  // Parse the incoming webhook request body and Stripe signature
   const body = await request.text();
   const sig = headers().get('Stripe-Signature');
 
+  // Fetch the Stripe webhook secret from environment variables
   const webhookSecret =
     process.env.STRIPE_WEBHOOK_SECRET_LIVE ?? process.env.STRIPE_WEBHOOK_SECRET;
+
+  // Initialize a variable to hold the Stripe event
   let event: Stripe.Event;
 
   try {
+    // Validate the Stripe signature and construct the Stripe event
     if (!sig || !webhookSecret) return;
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err: any) {
+    // Log errors and respond with a 400 Bad Request status if signature or event construction fails
     console.log(`Error message: ${err.message}`);
     return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
+  // Check if the received event is relevant and process it accordingly
   if (relevantEvents.has(event.type)) {
     try {
       switch (event.type) {
@@ -72,6 +80,7 @@ export async function POST(request: NextRequest) {
           throw new Error('Unhandled relevant event!');
       }
     } catch (error) {
+      // Log errors and respond with a 400 Bad Request status if event processing fails
       console.log(error);
       return new NextResponse(
         'Webhook error: "Webhook handler failed. View logs."',
@@ -80,5 +89,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Respond with a success message and a 200 OK status
   return NextResponse.json({ received: true }, { status: 200 });
 }

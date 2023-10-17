@@ -7,7 +7,7 @@ import React, {
   useState,
   useMemo,
 } from 'react';
-import 'quill/dist/quill.snow.css'; 
+import 'quill/dist/quill.snow.css';
 import BannerImage from '../../../public/BannerImage.png';
 import { useSocket } from '@/lib/providers/socket-provider';
 import {
@@ -22,8 +22,11 @@ import {
   updateEmojiFile,
   updateEmojiFolder,
   updateEmojiWorkspace,
+  updateFile,
   updateFileFile,
+  updateFolder,
   updateFolderFile,
+  updateWorkspace,
   updateWorkspaceFile,
 } from '@/lib/supabase/queries';
 import { Badge } from '@/components/ui/badge';
@@ -36,10 +39,7 @@ import {
   Profile,
   workspace,
 } from '@/lib/supabase/supabase.types';
-import {
-  usePathname,
-  useRouter,
-} from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
 import {
@@ -48,6 +48,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../ui/tooltip';
+import BannerUpload from '../banner-upload/banner-upload';
+import { XCircleIcon } from 'lucide-react';
 
 var TOOLBAR_OPTIONS = [
   ['bold', 'italic', 'underline', 'strike'], // toggled buttons
@@ -81,7 +83,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   dirDetails,
 }) => {
   const { state, workspaceId, folderId, dispatch } = useAppState();
-  const { socket, isConnected } = useSocket();
+  const { socket } = useSocket();
   const [quill, setQuill] = useState<any>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [saving, setSaving] = useState(false);
@@ -93,7 +95,11 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const [localCursors, setLocalCursors] = useState<any>([]);
+  const [deletingBanner, setDeletingBanner] = useState(false);
 
+  //We are creating breadcrubms here because we want the user to see the path they are on.
+  //This is done here so that we can wire it up with the client side data so that
+  //When the title for example changes on one place it changes everywhere?
   const breadCrumbs = useMemo(() => {
     if (!pathname || !state.workspaces || !workspaceId) return '';
 
@@ -135,6 +141,11 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     return `${workspaceBreadCrumb} ${folderBreadCrumb} ${fileBreadCrumb}`;
   }, [state, pathname, workspaceId]);
 
+  /**
+   * Here we are using the server data first and then we are swapping to the client data when it populates, so that
+   * the server can prerender the client component with data from the server
+   * this way the user will see data immidiately and can also make changes to the data client side.
+   */
   const details = useMemo(() => {
     let selectedDir;
     if (dirType === 'file') {
@@ -163,11 +174,18 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       createdAt: dirDetails?.createdAt,
       data: dirDetails?.data,
       inTrash: dirDetails?.inTrash,
-    };
+      bannerUrl: dirDetails?.bannerUrl,
+    } as workspace | Folder | File;
   }, [state]);
 
-  //This call is needed because everything is cached and if someone made a change
-  //We will only get the data from our App State
+  /**
+   * Here we are refetching the data on each call. It is needed because everything is cached and if someone made a change
+   * we will only get the data from our old call State. changign a page to force-dynamic will not solver this problem.
+   * This is because of the router cache in nextjs13 on the client.
+   * On the client side the data is also cached, which is sad if you ask me lol. Also dont forget to
+   * subscribe would mean alog to me because I spent time in researching this and writing this for you ♥️ Cant wait to see you
+   * succeed!! Here if you want to read more ----> https://nextjs.org/docs/app/building-your-application/caching#router-cache
+   */
   useEffect(() => {
     let selectedDir;
     const fetchInformation = async () => {
@@ -254,7 +272,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   }, []);
 
-  //When the icon changes
+  //When the icon changes we are going to save it
   const iconOnChange = async (icon: string) => {
     if (!fileId) return;
     const updateState = () => {
@@ -275,6 +293,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
+  //Here we are getting the user data and also storing it with custom avatar url that we pull from the storage
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -296,7 +315,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     getUser();
   }, [supabase]);
 
-  //Real time user infomation
+  //Setting up Real time presence from Supabase We also create the cursor for each user here and save only the collaborator cursors not the current user cursor.
   useEffect(() => {
     if (!fileId || quill === null) return;
     const room = supabase.channel(fileId);
@@ -339,7 +358,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     };
   }, [fileId, user, quill]);
 
-  //Receiving the cursor Changes
+  //Setting up listener for receiving cursor events
   useEffect(() => {
     if (quill === null || socket === null || !fileId || !localCursors.length)
       return;
@@ -361,7 +380,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     };
   }, [quill, socket, fileId, localCursors]);
 
-  //Send Changes for broadcasting to other clients
+  //Sending quill changes to all clients
   useEffect(() => {
     if (
       quill === null ||
@@ -426,6 +445,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     };
   }, [quill, socket, fileId, details, user, localCursors]);
 
+  //When the user clients restore file the file/ folder should be restored.
   const restoreFileHandler = async () => {
     if (dirType === 'file') {
       if (!folderId) return;
@@ -446,6 +466,43 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
+  //Delete the workspace banner
+  const deleteWorkspaceBanner = async () => {
+    if (!fileId) return;
+    setDeletingBanner(true);
+    if (dirType === 'file') {
+      if (!folderId || !workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FILE_DATA',
+        payload: { file: { bannerUrl: '' }, fileId, folderId, workspaceId },
+      });
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateFile({ bannerUrl: '' }, fileId);
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FOLDER_DATA',
+        payload: { folder: { bannerUrl: '' }, folderId: fileId, workspaceId },
+      });
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateFolder({ bannerUrl: '' }, fileId);
+    }
+    if (dirType === 'workspace') {
+      dispatch({
+        type: 'UPDATE_WORKSPACE_DATA',
+        payload: {
+          workspace: { bannerUrl: '' },
+          workspaceId: fileId,
+        },
+      });
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateWorkspace({ bannerUrl: '' }, fileId);
+    }
+    setDeletingBanner(false);
+  };
+
+  //Deleting the directory file permanantly.
   const permanantlyDelete = async () => {
     if (dirType === 'file') {
       if (!folderId || !workspaceId) return;
@@ -467,7 +524,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
   };
 
-  //Receiving the changes
+  //Setting up on change listener that come from the emit  and updating contents
   useEffect(() => {
     if (quill === null || socket === null) return;
     const socketHandler = (deltas: any, id: string) => {
@@ -560,13 +617,21 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           </div>
         </div>
       </div>
-      <div className="relative">
-        <Image
-          src={BannerImage}
-          className=" w-full md:h-48 h-20 object-cover"
-          alt="Banner Image"
-        />
-      </div>
+
+      {details.bannerUrl && (
+        <div className="relative w-full h-[200px]">
+          <Image
+            src={
+              supabase.storage
+                .from('file-banners')
+                .getPublicUrl(details.bannerUrl).data.publicUrl
+            }
+            fill
+            className=" w-full md:h-48 h-20 object-cover "
+            alt="Banner Image"
+          />
+        </div>
+      )}
 
       <div className="flex justify-center items-center flex-col mt-2 relative ">
         <div className=" w-full self-center max-w-[800px] flex flex-col px-7 lg:my-8">
@@ -577,6 +642,29 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
               </div>
             </EmojiPicker>
           </div>
+          <div className="flex">
+            <BannerUpload
+              details={details}
+              id={fileId}
+              dirType={dirType}
+              className="mt-2 text-sm text-muted-foreground p-2 hover:text-card-foreground transition-all rounded-md"
+            >
+              {details.bannerUrl ? 'Update Banner' : 'Add Banner'}
+            </BannerUpload>
+            {details.bannerUrl && (
+              <Button
+                onClick={deleteWorkspaceBanner}
+                disabled={deletingBanner}
+                variant="ghost"
+                className="gap-2 hover:bg-background flex items-center justify-center mt-2 text-sm text-muted-foreground w-36 p-2 rounded-md"
+              >
+                <span className="whitespace-nowrap font-normal">
+                  Remove Banner
+                </span>
+                <XCircleIcon size={16} />
+              </Button>
+            )}
+          </div>
 
           <span className="text-muted-foreground text-3xl font-bold h-9">
             {details?.title}
@@ -584,13 +672,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           <span className="text-muted-foreground text-sm ">
             {dirType.toUpperCase()}
           </span>
-          <Button
-            size={'sm'}
-            variant="secondary"
-            className="top-4 bg-transparent mt-4 z-50 text-muted-foreground left-4 self-start"
-          >
-            Add Banner
-          </Button>
         </div>
         <div
           id="container"

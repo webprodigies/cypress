@@ -146,6 +146,7 @@ const SettingsForm = () => {
     }
   };
 
+  //When the user confirmed they want to change shared to private then we remove everyone.
   const onClickAlertConfirm = async () => {
     if (!workspaceId) return;
     if (collaborators.length > 0) {
@@ -155,6 +156,7 @@ const SettingsForm = () => {
     setOpenAlertMessage(false);
   };
 
+  //User can change profile picture.
   const onChangeProfilePicture = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -183,7 +185,7 @@ const SettingsForm = () => {
     }
   };
 
-  //GEt user details
+  //Fetching user details so we can show the avatar in the settings tav
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -225,6 +227,7 @@ const SettingsForm = () => {
     fetchCollaborators();
   }, [workspaceId]);
 
+  //Create the stipe portal to manage subscription
   const redirectToCustomerPortal = async () => {
     setLoadingPortal(true);
     try {

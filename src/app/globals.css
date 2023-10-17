@@ -120,26 +120,10 @@ body {
   background-image: radial-gradient(rgb(25, 25, 25) 1px, transparent 1px);
   background-size: 30px 30px;
 } */
-/* .ql-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  border: none !important;
-}
-
-.ql-formats {
-  display: flex;
-  flex-shrink: 0;
-} */
 
 .ql-toolbar::-webkit-scrollbar {
   display: none;
 }
-
-/* .ql-container {
-  border: none !important;
-} */
 
 .ql-toolbar {
   @apply flex flex-wrap items-center justify-center dark:bg-background/70 bg-white/40 backdrop-blur-md z-40 sticky top-0 !border-none left-0 right-0;

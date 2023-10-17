@@ -21,7 +21,9 @@ import { AuthUser } from '@supabase/supabase-js';
 import { useToast } from '../ui/use-toast';
 import EmojiPicker from '../emoji-picker';
 import { useAppState } from '@/lib/providers/state-provider';
+import Loader from '../loader';
 
+// Define props for the DashboardSetup component
 interface DashboardSetupProps {
   user: AuthUser;
   subscription: Subscription | null;
@@ -34,9 +36,12 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
   const router = useRouter();
   const { toast } = useToast();
   const [selectedEmoji, setSelectedEmoji] = React.useState('💼');
+
+  // Create a Supabase client instance
   const supabase = createClientComponentClient();
   const { dispatch } = useAppState();
 
+  // Initialize the useForm hook for form handling
   const {
     register,
     handleSubmit,
@@ -50,10 +55,13 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
     },
   });
 
+  // Define the form submission logic
   const onSubmit: SubmitHandler<FieldValues> = async (value) => {
     const file = value.logo?.[0];
     let filePath = null;
     const workspaceUUID = v4();
+
+    // Check if a file (logo) is provided and handle its upload
     if (file) {
       try {
         const fileUUID = v4();
@@ -69,11 +77,12 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
         console.log(storageError);
         toast({
           variant: 'destructive',
-          title: 'Error! couldnt not upload your workspace picture',
+          title: 'Error! Could not upload your workspace picture',
         });
       }
     }
 
+    // Create a new workspace record and handle potential errors
     try {
       const newWorkspace: workspace = {
         data: null,
@@ -86,11 +95,14 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
         logo: filePath || null,
       };
       await createWorkspace(newWorkspace);
+
+      // Dispatch the new workspace to the application state but add folders to it because this is how we will maintain the folders state
       dispatch({
         type: 'ADD_WORKSPACE',
         payload: { ...newWorkspace, folders: [] },
       });
 
+      // Display a success toast and redirect to the workspace dashboard
       toast({
         title: 'Workspace Created',
         description: `${newWorkspace.title} has been created successfully.`,
@@ -98,11 +110,12 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
 
       router.replace(`/dashboard/${newWorkspace.id}`);
     } catch (error) {
+      // Handle errors when creating a workspace
       toast({
         variant: 'destructive',
         title: 'Could not create your workspace',
         description:
-          'Oppse! something went wrong we couldnt create your workspace. Try again or come back later.',
+          "Oops! Something went wrong, and we couldn't create your workspace. Try again or come back later.",
       });
     } finally {
       reset();
@@ -183,28 +196,7 @@ export const DashboardSetup: React.FC<DashboardSetupProps> = ({
                 disabled={isLoading}
                 type="submit"
               >
-                {!isLoading ? (
-                  'Create Workspace'
-                ) : (
-                  <div role="status">
-                    <svg
-                      aria-hidden="true"
-                      className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-primary-foreground/30 fill-primary-foreground "
-                      viewBox="0 0 100 101"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                        fill="currentColor"
-                      />
-                      <path
-                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                        fill="currentFill"
-                      />
-                    </svg>
-                  </div>
-                )}
+                {!isLoading ? 'Create Workspace' : <Loader />}
               </Button>
             </div>
           </div>

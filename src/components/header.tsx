@@ -207,7 +207,6 @@ const Header = () => {
           </NavigationMenuItem>
           <NavigationMenuItem>
             <Link
-              // WIP
               href="#"
               legacyBehavior
               passHref

@@ -160,6 +160,7 @@ export const workspaces = pgTable('workspaces', {
   data: text('data'),
   inTrash: text('in_trash'),
   logo: text('logo'),
+  bannerUrl: text('banner_url'),
 });
 
 export const profiles = pgTable('profiles', {
@@ -185,6 +186,7 @@ export const folders = pgTable('folders', {
   iconId: text('icon_id').notNull(),
   data: text('data'),
   inTrash: text('in_trash'),
+  bannerUrl: text('banner_url'),
 });
 
 export const files = pgTable('files', {
@@ -202,6 +204,7 @@ export const files = pgTable('files', {
   workspaceId: uuid('workspace_id')
     .notNull()
     .references(() => workspaces.id, { onDelete: 'cascade' }),
+  bannerUrl: text('banner_url'),
 });
 
 export const collaborators = pgTable(

@@ -12,4 +12,3 @@ const migrateDb = async () => {
 migrateDb().finally(() => {
   process.exit();
 });
- 

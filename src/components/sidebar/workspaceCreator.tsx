@@ -11,7 +11,7 @@ import {
   Profile,
   workspace,
 } from '@/lib/supabase/supabase.types';
-import { Input } from './ui/input';
+import { Input } from '../ui/input';
 import {
   Select,
   SelectContent,
@@ -19,13 +19,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Button } from './ui/button';
+} from '../ui/select';
+import { ScrollArea } from '../ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Button } from '../ui/button';
 import { v4 as uuid } from 'uuid';
-import { useToast } from './ui/use-toast';
-import CollaboratorSearch from './collaborator-search';
+import { useToast } from '../ui/use-toast';
+import CollaboratorSearch from '../collaborator-search';
 
 interface WorkspaceCreatorProps {}
 

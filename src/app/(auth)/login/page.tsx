@@ -129,7 +129,7 @@ export default function Login() {
           {!isLoading ? 'Login' : <Loader />}
         </Button>
         <span className="self-center">
-          Don't have an account?{' '}
+          Dont have an account?{' '}
           <Link
             href="/signup"
             className="text-primary"

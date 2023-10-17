@@ -34,8 +34,8 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ children }) => {
 
   const logoutUser = async () => {
     await supabase.auth.signOut();
-    dispatch({ type: 'SET_WORKSPACES', payload: [] });
     router.refresh();
+    dispatch({ type: 'SET_WORKSPACES', payload: [] });
   };
 
   return (
